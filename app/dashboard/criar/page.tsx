@@ -179,9 +179,15 @@ export default function CriarPage() {
         }),
       });
       const data = await res.json();
-      if (data.imageUrl) setResults((prev) => [{ url: data.imageUrl, saved: false, saving: false, debug: data.debug }, ...prev]);
+      console.log("API response:", { imageUrl: data.imageUrl?.slice(0, 80), error: data.error, debug: data.debug });
+      if (data.error) {
+        alert(`Erro: ${data.error}`);
+      } else if (data.imageUrl) {
+        setResults((prev) => [{ url: data.imageUrl, saved: false, saving: false, debug: data.debug }, ...prev]);
+      }
     } catch (err) {
       console.error("Erro ao gerar:", err);
+      alert(`Erro de conexão: ${err}`);
     } finally {
       setLoading(false);
     }

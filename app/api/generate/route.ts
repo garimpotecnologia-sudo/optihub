@@ -76,20 +76,34 @@ export async function POST(request: NextRequest) {
       colors,
     });
 
-    // Upload to Supabase Storage
+    // Upload to Supabase Storage — always try to get a real URL
     let storedUrl = result.imageUrl;
     if (result.imageBase64) {
-      const fileName = `${user.id}/${Date.now()}.png`;
-      const buffer = Buffer.from(result.imageBase64, "base64");
-      const { data: uploadData } = await supabase.storage
-        .from("generations")
-        .upload(fileName, buffer, { contentType: "image/png" });
-
-      if (uploadData) {
-        const { data: urlData } = supabase.storage
+      try {
+        const fileName = `${user.id}/${Date.now()}.png`;
+        const buffer = Buffer.from(result.imageBase64, "base64");
+        const { data: uploadData, error: uploadError } = await supabase.storage
           .from("generations")
-          .getPublicUrl(uploadData.path);
-        storedUrl = urlData.publicUrl;
+          .upload(fileName, buffer, { contentType: "image/png" });
+
+        if (uploadError) {
+          console.error("Storage upload error:", uploadError.message);
+        }
+
+        if (uploadData) {
+          const { data: urlData } = supabase.storage
+            .from("generations")
+            .getPublicUrl(uploadData.path);
+          storedUrl = urlData.publicUrl;
+          console.log("Image stored at:", storedUrl);
+        } else {
+          // Fallback: return truncated base64 data URL (browser can handle it)
+          storedUrl = `data:image/png;base64,${result.imageBase64}`;
+          console.log("Using base64 fallback, length:", result.imageBase64.length);
+        }
+      } catch (storageErr) {
+        console.error("Storage error:", storageErr);
+        storedUrl = `data:image/png;base64,${result.imageBase64}`;
       }
     }
 
