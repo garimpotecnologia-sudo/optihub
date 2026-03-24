@@ -44,7 +44,8 @@ export default function CriarPage() {
   const [formato, setFormato] = useState(formatos[0]);
   const [estilo, setEstilo] = useState("Moderno");
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<{ url: string; saved: boolean; saving: boolean }[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [results, setResults] = useState<{ url: string; saved: boolean; saving: boolean; debug?: any }[]>([]);
   const [logo, setLogo] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [savedLogo, setSavedLogo] = useState<string | null>(null);
@@ -184,7 +185,7 @@ export default function CriarPage() {
         }),
       });
       const data = await res.json();
-      if (data.imageUrl) setResults((prev) => [{ url: data.imageUrl, saved: false, saving: false }, ...prev]);
+      if (data.imageUrl) setResults((prev) => [{ url: data.imageUrl, saved: false, saving: false, debug: data.debug }, ...prev]);
     } catch (err) {
       console.error("Erro ao gerar:", err);
     } finally {
@@ -679,6 +680,25 @@ export default function CriarPage() {
                       Compartilhar
                     </button>
                   </div>
+
+                  {/* Debug info */}
+                  {item.debug && (
+                    <details className="mt-2">
+                      <summary className="text-[10px] text-text-muted cursor-pointer hover:text-text-secondary">
+                        Ver prompt enviado
+                      </summary>
+                      <div className="mt-1.5 p-2.5 rounded-lg bg-bg-deep border border-border text-[10px] font-mono text-text-muted space-y-1 max-h-40 overflow-y-auto">
+                        <div><span className="text-accent-green">ratio:</span> {item.debug.ratio}</div>
+                        <div><span className="text-accent-green">estilo:</span> {item.debug.estilo}</div>
+                        <div><span className="text-accent-green">cores:</span> {JSON.stringify(item.debug.colors || "nenhuma")}</div>
+                        <div><span className="text-accent-green">refs:</span> {item.debug.refImages} imagens</div>
+                        <div className="pt-1 border-t border-border mt-1">
+                          <span className="text-accent-amber">prompt completo:</span>
+                          <pre className="whitespace-pre-wrap mt-1 text-text-secondary">{item.debug.sentPrompt}</pre>
+                        </div>
+                      </div>
+                    </details>
+                  )}
                 </div>
               </div>
             ))}

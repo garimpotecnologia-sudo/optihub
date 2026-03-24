@@ -67,6 +67,11 @@ export async function generateImage(
     fullPrompt += `\n\n${RATIO_INSTRUCTIONS[req.aspectRatio]}`;
   }
 
+  // Log the full prompt being sent
+  console.log("=== NANO BANANA FULL PROMPT ===");
+  console.log(fullPrompt);
+  console.log("=== END PROMPT ===");
+
   parts.push({ text: fullPrompt });
 
   const response = await fetch(`${API_URL}?key=${API_KEY}`, {

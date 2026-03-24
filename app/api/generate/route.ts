@@ -60,6 +60,17 @@ export async function POST(request: NextRequest) {
       enhancedPrompt = `Professional product photography edit: ${prompt}`;
     }
 
+    // Log what's being sent
+    const genRequest = {
+      prompt: enhancedPrompt,
+      referenceImages: referenceImages?.length ? `${referenceImages.length} images` : "none",
+      aspectRatio: ratio,
+      style: estilo,
+      colors,
+    };
+    console.log("=== GENERATE REQUEST ===");
+    console.log(JSON.stringify(genRequest, null, 2));
+
     const result = await generateImage({
       prompt: enhancedPrompt,
       referenceImages,
@@ -91,6 +102,13 @@ export async function POST(request: NextRequest) {
       tool: tool || "CRIADOR",
       prompt,
       metadata: { tipo, estilo, ratio },
+      debug: {
+        sentPrompt: enhancedPrompt,
+        ratio,
+        estilo,
+        colors,
+        refImages: referenceImages?.length || 0,
+      },
     });
   } catch (error) {
     console.error("Generate error:", error);
