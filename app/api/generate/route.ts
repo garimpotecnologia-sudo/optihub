@@ -12,13 +12,11 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabase();
 
-    // Check auth
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    // Get profile & check credits
     const { data: profile } = await supabase
       .from("profiles")
       .select("plan, credits, custom_api_key")
@@ -29,7 +27,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Perfil não encontrado" }, { status: 404 });
     }
 
-    // Check monthly usage
     const { data: usageData } = await supabase.rpc("get_monthly_usage", {
       p_user_id: user.id,
     });
@@ -45,41 +42,41 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { prompt, referenceImages, tipo, estilo, ratio, tool, colors } = body;
+    const { prompt, logo, referenceImage, tipo, estilo, ratio, tool, colors } = body;
 
     if (!prompt) {
       return NextResponse.json({ error: "Prompt é obrigatório" }, { status: 400 });
     }
 
-    // Build enhanced prompt
+    // Build enhanced prompt based on tool
     let enhancedPrompt = prompt;
     if (tool === "CRIADOR" && tipo) {
-      enhancedPrompt = `Create a ${tipo} design for an optical store/eyewear shop. ${prompt}`;
+      enhancedPrompt = `Create a ${tipo} design for an optical store/eyewear shop.\n\n${prompt}`;
     }
     if (tool === "EDITOR") {
-      enhancedPrompt = `Professional product photography edit: ${prompt}`;
+      enhancedPrompt = `Professional product photography edit:\n\n${prompt}`;
     }
 
-    // Log what's being sent
-    const genRequest = {
-      prompt: enhancedPrompt,
-      referenceImages: referenceImages?.length ? `${referenceImages.length} images` : "none",
-      aspectRatio: ratio,
-      style: estilo,
-      colors,
-    };
     console.log("=== GENERATE REQUEST ===");
-    console.log(JSON.stringify(genRequest, null, 2));
+    console.log("Tool:", tool);
+    console.log("Tipo:", tipo);
+    console.log("Ratio:", ratio);
+    console.log("Estilo:", estilo);
+    console.log("Colors:", JSON.stringify(colors));
+    console.log("Has logo:", !!logo);
+    console.log("Has reference:", !!referenceImage);
+    console.log("Prompt:", enhancedPrompt.slice(0, 200));
 
     const result = await generateImage({
       prompt: enhancedPrompt,
-      referenceImages,
+      logo: logo || undefined,
+      referenceImage: referenceImage || undefined,
       aspectRatio: ratio,
       style: estilo,
       colors,
     });
 
-    // Upload image to Supabase Storage
+    // Upload to Supabase Storage
     let storedUrl = result.imageUrl;
     if (result.imageBase64) {
       const fileName = `${user.id}/${Date.now()}.png`;
@@ -96,18 +93,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Return image URL — user decides whether to save to gallery
     return NextResponse.json({
       imageUrl: storedUrl,
       tool: tool || "CRIADOR",
       prompt,
       metadata: { tipo, estilo, ratio },
       debug: {
-        sentPrompt: enhancedPrompt,
+        finalPrompt: result.finalPrompt,
         ratio,
         estilo,
         colors,
-        refImages: referenceImages?.length || 0,
+        hasLogo: !!logo,
+        hasReference: !!referenceImage,
       },
     });
   } catch (error) {

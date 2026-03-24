@@ -158,13 +158,6 @@ export default function CriarPage() {
     if (!prompt.trim()) return;
     setLoading(true);
     try {
-      let finalPrompt = prompt;
-      if (useLogo && logo) finalPrompt += ". Include the company logo in the design.";
-
-      const refs: string[] = [];
-      if (useLogo && logo) refs.push(logo);
-      if (refImage) refs.push(refImage);
-
       const colors = (primaryColor || secondary1 || secondary2) ? {
         primary: primaryColor || undefined,
         secondary1: secondary1 || undefined,
@@ -175,12 +168,13 @@ export default function CriarPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: finalPrompt,
+          prompt,
           tipo: formato.label,
           estilo,
           ratio: formato.ratio,
           tool: "CRIADOR",
-          referenceImages: refs.length > 0 ? refs : undefined,
+          logo: useLogo && logo ? logo : undefined,
+          referenceImage: refImage || undefined,
           colors,
         }),
       });
@@ -687,14 +681,15 @@ export default function CriarPage() {
                       <summary className="text-[10px] text-text-muted cursor-pointer hover:text-text-secondary">
                         Ver prompt enviado
                       </summary>
-                      <div className="mt-1.5 p-2.5 rounded-lg bg-bg-deep border border-border text-[10px] font-mono text-text-muted space-y-1 max-h-40 overflow-y-auto">
+                      <div className="mt-1.5 p-2.5 rounded-lg bg-bg-deep border border-border text-[10px] font-mono text-text-muted space-y-1 max-h-60 overflow-y-auto">
                         <div><span className="text-accent-green">ratio:</span> {item.debug.ratio}</div>
                         <div><span className="text-accent-green">estilo:</span> {item.debug.estilo}</div>
                         <div><span className="text-accent-green">cores:</span> {JSON.stringify(item.debug.colors || "nenhuma")}</div>
-                        <div><span className="text-accent-green">refs:</span> {item.debug.refImages} imagens</div>
+                        <div><span className="text-accent-green">logo enviada:</span> {item.debug.hasLogo ? "SIM" : "não"}</div>
+                        <div><span className="text-accent-green">referência enviada:</span> {item.debug.hasReference ? "SIM" : "não"}</div>
                         <div className="pt-1 border-t border-border mt-1">
-                          <span className="text-accent-amber">prompt completo:</span>
-                          <pre className="whitespace-pre-wrap mt-1 text-text-secondary">{item.debug.sentPrompt}</pre>
+                          <span className="text-accent-amber">prompt FINAL enviado ao Gemini:</span>
+                          <pre className="whitespace-pre-wrap mt-1 text-text-secondary leading-relaxed">{item.debug.finalPrompt}</pre>
                         </div>
                       </div>
                     </details>
