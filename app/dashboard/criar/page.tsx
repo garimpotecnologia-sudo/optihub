@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
 
 const formatos = [
@@ -54,8 +54,7 @@ export default function CriarPage() {
   const [refImage, setRefImage] = useState<string | null>(null);
   const [showPrompts, setShowPrompts] = useState(false);
   const [promptCat, setPromptCat] = useState("Todos");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const supabase = useMemo(() => createClient(), []);
+  const supabase = createClient();
 
   useEffect(() => {
     async function loadLogo() {
@@ -72,7 +71,8 @@ export default function CriarPage() {
       }
     }
     loadLogo();
-  }, [supabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
