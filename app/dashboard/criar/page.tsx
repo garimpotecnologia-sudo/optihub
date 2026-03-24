@@ -44,7 +44,7 @@ export default function CriarPage() {
   const [formato, setFormato] = useState(formatos[0]);
   const [estilo, setEstilo] = useState("Moderno");
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<string[]>([]);
+  const [results, setResults] = useState<{ url: string; saved: boolean; saving: boolean }[]>([]);
   const [logo, setLogo] = useState<string | null>(null);
   const [savedLogo, setSavedLogo] = useState<string | null>(null);
   const [useLogo, setUseLogo] = useState(false);
@@ -131,7 +131,7 @@ export default function CriarPage() {
         }),
       });
       const data = await res.json();
-      if (data.imageUrl) setResults((prev) => [data.imageUrl, ...prev]);
+      if (data.imageUrl) setResults((prev) => [{ url: data.imageUrl, saved: false, saving: false }, ...prev]);
     } catch (err) {
       console.error("Erro ao gerar:", err);
     } finally {
@@ -442,15 +442,68 @@ export default function CriarPage() {
         <div>
           <h2 className="text-lg font-[700] font-[var(--font-heading)] mb-4 tracking-tight">Resultados</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {results.map((url, i) => (
-              <div key={i} className="rounded-2xl card-base overflow-hidden group">
+            {results.map((item, i) => (
+              <div key={i} className="rounded-2xl card-base overflow-hidden">
                 <div className="aspect-square bg-bg-card-hover flex items-center justify-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt={`Geração ${i + 1}`} className="w-full h-full object-cover" />
+                  <img src={item.url} alt={`Geração ${i + 1}`} className="w-full h-full object-cover" />
                 </div>
-                <div className="p-3 flex gap-2">
-                  <button className="btn-press flex-1 py-2.5 rounded-lg text-xs font-bold bg-accent-green/10 text-accent-green hover:bg-accent-green/20 transition-colors">Download HD</button>
-                  <button className="btn-press flex-1 py-2.5 rounded-lg text-xs font-medium border border-border text-text-secondary hover:border-accent-green/30 hover:text-accent-green transition-colors">Compartilhar</button>
+                <div className="p-3 space-y-2">
+                  {/* Save to gallery prompt */}
+                  {!item.saved ? (
+                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-accent-amber/[0.06] border border-accent-amber/15">
+                      <svg className="w-4 h-4 text-accent-amber shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                      </svg>
+                      <span className="text-[11px] text-accent-amber/80 flex-1">Salvar na galeria?</span>
+                      <button
+                        onClick={async () => {
+                          setResults(prev => prev.map((r, idx) => idx === i ? { ...r, saving: true } : r));
+                          try {
+                            await fetch("/api/gallery", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                imageUrl: item.url,
+                                tool: "CRIADOR",
+                                prompt,
+                                metadata: { tipo: formato.label, estilo, ratio: formato.ratio },
+                              }),
+                            });
+                            setResults(prev => prev.map((r, idx) => idx === i ? { ...r, saved: true, saving: false } : r));
+                          } catch {
+                            setResults(prev => prev.map((r, idx) => idx === i ? { ...r, saving: false } : r));
+                          }
+                        }}
+                        disabled={item.saving}
+                        className="btn-press px-3 py-1 rounded-md text-[11px] font-bold bg-accent-green/20 text-accent-green hover:bg-accent-green/30 transition-colors"
+                      >
+                        {item.saving ? "..." : "Salvar"}
+                      </button>
+                      <button
+                        onClick={() => setResults(prev => prev.map((r, idx) => idx === i ? { ...r, saved: true } : r))}
+                        className="text-[11px] text-text-muted hover:text-text-secondary transition-colors"
+                      >
+                        Não
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] text-accent-green/70">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Salvo na galeria
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <a href={item.url} download target="_blank" className="btn-press flex-1 py-2.5 rounded-lg text-xs font-bold bg-accent-green/10 text-accent-green hover:bg-accent-green/20 transition-colors text-center">
+                      Download HD
+                    </a>
+                    <button className="btn-press flex-1 py-2.5 rounded-lg text-xs font-medium border border-border text-text-secondary hover:border-accent-green/30 hover:text-accent-green transition-colors">
+                      Compartilhar
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

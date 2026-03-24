@@ -85,17 +85,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Save generation to database
-    await supabase.from("generations").insert({
-      user_id: user.id,
+    // Return image URL — user decides whether to save to gallery
+    return NextResponse.json({
+      imageUrl: storedUrl,
       tool: tool || "CRIADOR",
       prompt,
-      image_url: storedUrl,
-      input_urls: referenceImages || [],
       metadata: { tipo, estilo, ratio },
     });
-
-    return NextResponse.json({ imageUrl: storedUrl });
   } catch (error) {
     console.error("Generate error:", error);
     return NextResponse.json(
