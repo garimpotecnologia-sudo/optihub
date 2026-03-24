@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase";
 
 const formatos = [
   { id: "post-feed", label: "Post Feed", desc: "Instagram / Facebook", ratio: "1:1", w: 40, h: 40 },
-  { id: "post-retrato", label: "Post Retrato", desc: "Melhor engajamento", ratio: "4:5", w: 36, h: 45 },
+  { id: "post-retrato", label: "Post Retrato", desc: "Melhor engajamento", ratio: "4:5", w: 36, h: 48 },
   { id: "story", label: "Story / Reels", desc: "Instagram / TikTok", ratio: "9:16", w: 28, h: 50 },
   { id: "banner", label: "Banner", desc: "Site / Facebook Cover", ratio: "16:9", w: 50, h: 28 },
   { id: "catalogo", label: "Catálogo", desc: "Múltiplos produtos", ratio: "1:1", w: 40, h: 40 },
@@ -682,6 +682,7 @@ export default function CriarPage() {
                         Ver prompt enviado
                       </summary>
                       <div className="mt-1.5 p-2.5 rounded-lg bg-bg-deep border border-border text-[10px] font-mono text-text-muted space-y-1 max-h-60 overflow-y-auto">
+                        <div><span className="text-accent-green">modelo:</span> {item.debug.model || "?"}</div>
                         <div><span className="text-accent-green">ratio:</span> {item.debug.ratio}</div>
                         <div><span className="text-accent-green">estilo:</span> {item.debug.estilo}</div>
                         <div><span className="text-accent-green">cores:</span> {JSON.stringify(item.debug.colors || "nenhuma")}</div>

@@ -1,7 +1,7 @@
 interface NanoBananaRequest {
   prompt: string;
-  logo?: string;           // Logo to overlay — NOT to reinterpret
-  referenceImage?: string; // Style/composition reference
+  logo?: string;
+  referenceImage?: string;
   aspectRatio?: "1:1" | "9:16" | "16:9" | "4:5";
   style?: string;
   colors?: { primary?: string; secondary1?: string; secondary2?: string };
@@ -10,91 +10,117 @@ interface NanoBananaRequest {
 interface NanoBananaResponse {
   imageUrl: string;
   imageBase64?: string;
-  finalPrompt?: string; // For debugging
+  finalPrompt?: string;
+  model?: string;
 }
 
-const API_URL =
-  process.env.NANO_BANANA_API_URL ||
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent";
 const API_KEY = process.env.NANO_BANANA_API_KEY || "";
 
-const RATIO_DIMENSIONS: Record<string, { w: number; h: number; desc: string }> = {
-  "1:1":  { w: 1080, h: 1080, desc: "square" },
-  "9:16": { w: 1080, h: 1920, desc: "vertical/portrait (tall, like a phone screen)" },
-  "16:9": { w: 1920, h: 1080, desc: "horizontal/landscape (wide, like a banner)" },
-  "4:5":  { w: 1080, h: 1350, desc: "slightly vertical portrait" },
+// Imagen 4 supports these ratios
+const IMAGEN_RATIO_MAP: Record<string, string> = {
+  "1:1": "1:1",
+  "9:16": "9:16",
+  "16:9": "16:9",
+  "4:5": "3:4", // closest supported ratio
 };
 
-async function imageToInlineData(img: string) {
+async function imageToBase64(img: string): Promise<{ mimeType: string; data: string }> {
   if (img.startsWith("data:")) {
     const [meta, data] = img.split(",");
     const mimeType = meta.split(":")[1].split(";")[0];
-    return { inlineData: { mimeType, data } };
+    return { mimeType, data };
   }
   const response = await fetch(img);
   const buffer = await response.arrayBuffer();
   const base64 = Buffer.from(buffer).toString("base64");
-  return { inlineData: { mimeType: "image/png", data: base64 } };
+  return { mimeType: "image/png", data: base64 };
 }
 
-export async function generateImage(
-  req: NanoBananaRequest
+// ============================================
+// IMAGEN 4 — for pure text-to-image with correct aspect ratio
+// ============================================
+async function generateWithImagen(
+  prompt: string,
+  aspectRatio: string
 ): Promise<NanoBananaResponse> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${API_KEY}`;
+
+  const imagenRatio = IMAGEN_RATIO_MAP[aspectRatio] || "1:1";
+
+  console.log("=== IMAGEN 4 REQUEST ===");
+  console.log("Ratio:", imagenRatio);
+  console.log("Prompt:", prompt.slice(0, 300));
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      instances: [{ prompt }],
+      parameters: {
+        aspectRatio: imagenRatio,
+        sampleCount: 1,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Imagen 4 API error: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+  const prediction = data.predictions?.[0];
+  const base64 = prediction?.bytesBase64Encoded;
+
+  if (base64) {
+    return {
+      imageUrl: `data:image/png;base64,${base64}`,
+      imageBase64: base64,
+      finalPrompt: prompt,
+      model: "imagen-4",
+    };
+  }
+
+  throw new Error("No image returned from Imagen 4");
+}
+
+// ============================================
+// GEMINI — for logo/reference image composition
+// ============================================
+async function generateWithGemini(
+  prompt: string,
+  logo?: string,
+  referenceImage?: string
+): Promise<NanoBananaResponse> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${API_KEY}`;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const parts: any[] = [];
 
-  // === REFERENCE IMAGE ===
-  // Sent FIRST so the model sees it before the prompt
-  if (req.referenceImage) {
-    parts.push(await imageToInlineData(req.referenceImage));
-    parts.push({ text: "Above is a REFERENCE IMAGE for style/composition inspiration. Use it as visual inspiration for colors, layout and mood — but create a completely NEW and ORIGINAL design based on the prompt below." });
+  // Reference image FIRST
+  if (referenceImage) {
+    const refData = await imageToBase64(referenceImage);
+    parts.push({ inlineData: refData });
+    parts.push({ text: "Above is a REFERENCE IMAGE. Use it as visual inspiration for style, colors and layout — but create a completely NEW design based on the prompt below." });
   }
 
-  // === LOGO ===
-  // Sent separately with VERY specific instructions
-  if (req.logo) {
-    parts.push(await imageToInlineData(req.logo));
-    parts.push({ text: "Above is the COMPANY LOGO. You MUST place this logo EXACTLY as-is in the final design. Do NOT modify, redraw, reinterpret or recreate the logo. Place the original logo image in a visible corner or header area of the design." });
+  // Logo with strict instructions
+  if (logo) {
+    const logoData = await imageToBase64(logo);
+    parts.push({ inlineData: logoData });
+    parts.push({ text: "Above is the COMPANY LOGO. Place this logo EXACTLY as-is in the design. Do NOT modify, redraw or recreate the logo. Overlay the original logo image in a visible area." });
   }
 
-  // === BUILD THE MAIN PROMPT ===
-  let fullPrompt = req.prompt;
+  // Main prompt
+  parts.push({ text: prompt });
 
-  // Style
-  if (req.style) {
-    fullPrompt += `\n\nVisual style: ${req.style}.`;
-  }
+  console.log("=== GEMINI REQUEST ===");
+  console.log("Parts:", parts.length);
+  console.log("Has logo:", !!logo);
+  console.log("Has reference:", !!referenceImage);
+  console.log("Prompt:", prompt.slice(0, 300));
 
-  // Colors
-  if (req.colors) {
-    const colorParts: string[] = [];
-    if (req.colors.primary) colorParts.push(`primary/dominant color: ${req.colors.primary}`);
-    if (req.colors.secondary1) colorParts.push(`secondary color 1: ${req.colors.secondary1}`);
-    if (req.colors.secondary2) colorParts.push(`secondary color 2: ${req.colors.secondary2}`);
-    if (colorParts.length > 0) {
-      fullPrompt += `\n\nColor palette — use these EXACT colors as the main colors: ${colorParts.join(", ")}.`;
-    }
-  }
-
-  // Aspect ratio — explicit dimensions
-  if (req.aspectRatio && RATIO_DIMENSIONS[req.aspectRatio]) {
-    const dim = RATIO_DIMENSIONS[req.aspectRatio];
-    fullPrompt += `\n\n=== IMAGE SIZE (MANDATORY) ===\nThe output image dimensions MUST be exactly ${dim.w}x${dim.h} pixels (${req.aspectRatio} ratio, ${dim.desc}).\nDo NOT output any other size. This is a strict requirement.`;
-  }
-
-  // Add main prompt as last part
-  parts.push({ text: fullPrompt });
-
-  // Log for debugging
-  console.log("=== NANO BANANA FINAL PROMPT ===");
-  console.log("Parts count:", parts.length);
-  console.log("Has logo:", !!req.logo);
-  console.log("Has reference:", !!req.referenceImage);
-  console.log("Aspect ratio:", req.aspectRatio);
-  console.log("Full text prompt:", fullPrompt);
-  console.log("=== END ===");
-
-  const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -107,7 +133,7 @@ export async function generateImage(
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`Nano Banana API error: ${response.status} - ${error}`);
+    throw new Error(`Gemini API error: ${response.status} - ${error}`);
   }
 
   const data = await response.json();
@@ -117,16 +143,59 @@ export async function generateImage(
   );
 
   if (imagePart?.inlineData) {
-    const base64 = imagePart.inlineData.data;
-    const mimeType = imagePart.inlineData.mimeType;
     return {
-      imageUrl: `data:${mimeType};base64,${base64}`,
-      imageBase64: base64,
-      finalPrompt: fullPrompt,
+      imageUrl: `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`,
+      imageBase64: imagePart.inlineData.data,
+      finalPrompt: prompt,
+      model: "gemini-2.5-flash-image",
     };
   }
 
-  throw new Error("No image returned from Nano Banana API");
+  throw new Error("No image returned from Gemini");
+}
+
+// ============================================
+// MAIN ENTRY POINT
+// ============================================
+export async function generateImage(
+  req: NanoBananaRequest
+): Promise<NanoBananaResponse> {
+  // Build the full prompt
+  let fullPrompt = req.prompt;
+
+  if (req.style) {
+    fullPrompt += `\n\nVisual style: ${req.style}.`;
+  }
+
+  if (req.colors) {
+    const colorParts: string[] = [];
+    if (req.colors.primary) colorParts.push(`primary color: ${req.colors.primary}`);
+    if (req.colors.secondary1) colorParts.push(`secondary color: ${req.colors.secondary1}`);
+    if (req.colors.secondary2) colorParts.push(`accent color: ${req.colors.secondary2}`);
+    if (colorParts.length > 0) {
+      fullPrompt += `\nUse these EXACT colors in the design: ${colorParts.join(", ")}.`;
+    }
+  }
+
+  const hasImages = !!req.logo || !!req.referenceImage;
+
+  if (hasImages) {
+    // Use GEMINI when we have logo or reference images
+    // Add size hint in prompt (Gemini doesn't guarantee it but it helps)
+    if (req.aspectRatio) {
+      const sizeHints: Record<string, string> = {
+        "1:1": "square format (1:1)",
+        "9:16": "vertical Story format (9:16, tall portrait)",
+        "16:9": "wide banner format (16:9, landscape)",
+        "4:5": "slightly vertical format (4:5, portrait)",
+      };
+      fullPrompt += `\n\nImage format: ${sizeHints[req.aspectRatio] || req.aspectRatio}.`;
+    }
+    return generateWithGemini(fullPrompt, req.logo, req.referenceImage);
+  } else {
+    // Use IMAGEN 4 for pure text — guarantees correct aspect ratio
+    return generateWithImagen(fullPrompt, req.aspectRatio || "1:1");
+  }
 }
 
 export async function editImage(req: NanoBananaRequest): Promise<NanoBananaResponse> {

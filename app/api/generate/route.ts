@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
       metadata: { tipo, estilo, ratio },
       debug: {
         finalPrompt: result.finalPrompt,
+        model: result.model,
         ratio,
         estilo,
         colors,
