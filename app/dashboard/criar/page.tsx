@@ -54,6 +54,9 @@ export default function CriarPage() {
   const [refImage, setRefImage] = useState<string | null>(null);
   const [showPrompts, setShowPrompts] = useState(false);
   const [promptCat, setPromptCat] = useState("Todos");
+  const [primaryColor, setPrimaryColor] = useState("");
+  const [secondary1, setSecondary1] = useState("");
+  const [secondary2, setSecondary2] = useState("");
   const supabase = createClient();
 
   useEffect(() => {
@@ -161,6 +164,12 @@ export default function CriarPage() {
       if (useLogo && logo) refs.push(logo);
       if (refImage) refs.push(refImage);
 
+      const colors = (primaryColor || secondary1 || secondary2) ? {
+        primary: primaryColor || undefined,
+        secondary1: secondary1 || undefined,
+        secondary2: secondary2 || undefined,
+      } : undefined;
+
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -171,6 +180,7 @@ export default function CriarPage() {
           ratio: formato.ratio,
           tool: "CRIADOR",
           referenceImages: refs.length > 0 ? refs : undefined,
+          colors,
         }),
       });
       const data = await res.json();
@@ -463,6 +473,118 @@ export default function CriarPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Cores */}
+        <div>
+          <label className="block text-xs font-semibold text-text-muted mb-3 uppercase tracking-wider">
+            Cores da Arte
+            <span className="font-normal normal-case tracking-normal ml-1 text-text-muted/60">(opcional)</span>
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Cor primária */}
+            <div>
+              <span className="block text-[11px] text-text-muted mb-1.5">Cor primária</span>
+              <div className="flex items-center gap-2">
+                <label className="relative cursor-pointer">
+                  <input
+                    type="color"
+                    value={primaryColor || "#03FF94"}
+                    onChange={(e) => setPrimaryColor(e.target.value)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div
+                    className="w-9 h-9 rounded-lg border-2 border-border hover:border-border-hover transition-colors"
+                    style={{ backgroundColor: primaryColor || "#1a3530" }}
+                  />
+                </label>
+                <input
+                  type="text"
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  placeholder="Ex: #FF5500"
+                  className="input-glow flex-1 px-3 py-2 rounded-lg bg-bg-deep border border-border text-text-primary placeholder:text-text-muted focus:outline-none transition-all text-xs font-mono"
+                />
+                {primaryColor && (
+                  <button onClick={() => setPrimaryColor("")} className="text-text-muted hover:text-accent-rose text-xs transition-colors">✕</button>
+                )}
+              </div>
+            </div>
+
+            {/* Cor secundária 1 */}
+            <div>
+              <span className="block text-[11px] text-text-muted mb-1.5">Secundária 1</span>
+              <div className="flex items-center gap-2">
+                <label className="relative cursor-pointer">
+                  <input
+                    type="color"
+                    value={secondary1 || "#59D4D1"}
+                    onChange={(e) => setSecondary1(e.target.value)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div
+                    className="w-9 h-9 rounded-lg border-2 border-border hover:border-border-hover transition-colors"
+                    style={{ backgroundColor: secondary1 || "#1a3530" }}
+                  />
+                </label>
+                <input
+                  type="text"
+                  value={secondary1}
+                  onChange={(e) => setSecondary1(e.target.value)}
+                  placeholder="Ex: #0088FF"
+                  className="input-glow flex-1 px-3 py-2 rounded-lg bg-bg-deep border border-border text-text-primary placeholder:text-text-muted focus:outline-none transition-all text-xs font-mono"
+                />
+                {secondary1 && (
+                  <button onClick={() => setSecondary1("")} className="text-text-muted hover:text-accent-rose text-xs transition-colors">✕</button>
+                )}
+              </div>
+            </div>
+
+            {/* Cor secundária 2 */}
+            <div>
+              <span className="block text-[11px] text-text-muted mb-1.5">Secundária 2</span>
+              <div className="flex items-center gap-2">
+                <label className="relative cursor-pointer">
+                  <input
+                    type="color"
+                    value={secondary2 || "#fbbf24"}
+                    onChange={(e) => setSecondary2(e.target.value)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div
+                    className="w-9 h-9 rounded-lg border-2 border-border hover:border-border-hover transition-colors"
+                    style={{ backgroundColor: secondary2 || "#1a3530" }}
+                  />
+                </label>
+                <input
+                  type="text"
+                  value={secondary2}
+                  onChange={(e) => setSecondary2(e.target.value)}
+                  placeholder="Ex: #FFD700"
+                  className="input-glow flex-1 px-3 py-2 rounded-lg bg-bg-deep border border-border text-text-primary placeholder:text-text-muted focus:outline-none transition-all text-xs font-mono"
+                />
+                {secondary2 && (
+                  <button onClick={() => setSecondary2("")} className="text-text-muted hover:text-accent-rose text-xs transition-colors">✕</button>
+                )}
+              </div>
+            </div>
+          </div>
+          {(primaryColor || secondary1 || secondary2) && (
+            <div className="flex items-center gap-2 mt-3">
+              <span className="text-[10px] text-text-muted">Preview:</span>
+              <div className="flex gap-1.5">
+                {primaryColor && <div className="w-6 h-6 rounded-md border border-border" style={{ backgroundColor: primaryColor }} title={`Primária: ${primaryColor}`} />}
+                {secondary1 && <div className="w-6 h-6 rounded-md border border-border" style={{ backgroundColor: secondary1 }} title={`Secundária 1: ${secondary1}`} />}
+                {secondary2 && <div className="w-6 h-6 rounded-md border border-border" style={{ backgroundColor: secondary2 }} title={`Secundária 2: ${secondary2}`} />}
+              </div>
+              <button
+                onClick={() => { setPrimaryColor(""); setSecondary1(""); setSecondary2(""); }}
+                className="text-[10px] text-text-muted hover:text-accent-rose transition-colors ml-2"
+              >
+                Limpar cores
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Generate button */}

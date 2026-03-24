@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { prompt, referenceImages, tipo, estilo, ratio, tool } = body;
+    const { prompt, referenceImages, tipo, estilo, ratio, tool, colors } = body;
 
     if (!prompt) {
       return NextResponse.json({ error: "Prompt é obrigatório" }, { status: 400 });
@@ -54,8 +54,7 @@ export async function POST(request: NextRequest) {
     // Build enhanced prompt
     let enhancedPrompt = prompt;
     if (tool === "CRIADOR" && tipo) {
-      enhancedPrompt = `Create a ${tipo} for an optical store. ${prompt}`;
-      if (estilo) enhancedPrompt += `. Visual style: ${estilo}`;
+      enhancedPrompt = `Create a ${tipo} design for an optical store/eyewear shop. ${prompt}`;
     }
     if (tool === "EDITOR") {
       enhancedPrompt = `Professional product photography edit: ${prompt}`;
@@ -66,6 +65,7 @@ export async function POST(request: NextRequest) {
       referenceImages,
       aspectRatio: ratio,
       style: estilo,
+      colors,
     });
 
     // Upload image to Supabase Storage
