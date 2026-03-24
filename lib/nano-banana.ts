@@ -176,12 +176,9 @@ async function overlayLogo(
 export async function generateImage(
   req: NanoBananaRequest
 ): Promise<NanoBananaResponse> {
-  // Build prompt
+  // Send exactly what the user wrote
+  // Only add colors if user selected them (they explicitly chose these)
   let fullPrompt = req.prompt;
-
-  if (req.style) {
-    fullPrompt += `\nVisual style: ${req.style}.`;
-  }
 
   if (req.colors) {
     const colorParts: string[] = [];

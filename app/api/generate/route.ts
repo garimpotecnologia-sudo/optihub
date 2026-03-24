@@ -48,14 +48,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Prompt é obrigatório" }, { status: 400 });
     }
 
-    // Build enhanced prompt based on tool
-    let enhancedPrompt = prompt;
-    if (tool === "CRIADOR" && tipo) {
-      enhancedPrompt = `Create a ${tipo} design for an optical store/eyewear shop.\n\n${prompt}`;
-    }
-    if (tool === "EDITOR") {
-      enhancedPrompt = `Professional product photography edit:\n\n${prompt}`;
-    }
+    // Send exactly what the user wrote — no modifications
+    const enhancedPrompt = prompt;
 
     console.log("=== GENERATE REQUEST ===");
     console.log("Tool:", tool);
