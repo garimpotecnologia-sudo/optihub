@@ -1,3 +1,5 @@
+import sharp from "sharp";
+
 interface NanoBananaRequest {
   prompt: string;
   logo?: string;
@@ -16,38 +18,44 @@ interface NanoBananaResponse {
 
 const API_KEY = process.env.NANO_BANANA_API_KEY || "";
 
-// Imagen 4 supports these ratios
 const IMAGEN_RATIO_MAP: Record<string, string> = {
   "1:1": "1:1",
   "9:16": "9:16",
   "16:9": "16:9",
-  "4:5": "3:4", // closest supported ratio
+  "4:5": "3:4",
 };
 
-async function imageToBase64(img: string): Promise<{ mimeType: string; data: string }> {
+async function imageToBuffer(img: string): Promise<Buffer> {
+  if (img.startsWith("data:")) {
+    const base64 = img.split(",")[1];
+    return Buffer.from(base64, "base64");
+  }
+  const response = await fetch(img);
+  return Buffer.from(await response.arrayBuffer());
+}
+
+async function imageToBase64Data(img: string): Promise<{ mimeType: string; data: string }> {
   if (img.startsWith("data:")) {
     const [meta, data] = img.split(",");
     const mimeType = meta.split(":")[1].split(";")[0];
     return { mimeType, data };
   }
   const response = await fetch(img);
-  const buffer = await response.arrayBuffer();
-  const base64 = Buffer.from(buffer).toString("base64");
-  return { mimeType: "image/png", data: base64 };
+  const buffer = Buffer.from(await response.arrayBuffer());
+  return { mimeType: "image/png", data: buffer.toString("base64") };
 }
 
 // ============================================
-// IMAGEN 4 — for pure text-to-image with correct aspect ratio
+// IMAGEN 4 — always correct aspect ratio
 // ============================================
 async function generateWithImagen(
   prompt: string,
   aspectRatio: string
-): Promise<NanoBananaResponse> {
+): Promise<{ base64: string; prompt: string }> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${API_KEY}`;
-
   const imagenRatio = IMAGEN_RATIO_MAP[aspectRatio] || "1:1";
 
-  console.log("=== IMAGEN 4 REQUEST ===");
+  console.log("=== IMAGEN 4 ===");
   console.log("Ratio:", imagenRatio);
   console.log("Prompt:", prompt.slice(0, 300));
 
@@ -56,68 +64,38 @@ async function generateWithImagen(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       instances: [{ prompt }],
-      parameters: {
-        aspectRatio: imagenRatio,
-        sampleCount: 1,
-      },
+      parameters: { aspectRatio: imagenRatio, sampleCount: 1 },
     }),
   });
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`Imagen 4 API error: ${response.status} - ${error}`);
+    throw new Error(`Imagen 4 error: ${response.status} - ${error}`);
   }
 
   const data = await response.json();
-  const prediction = data.predictions?.[0];
-  const base64 = prediction?.bytesBase64Encoded;
+  const base64 = data.predictions?.[0]?.bytesBase64Encoded;
+  if (!base64) throw new Error("No image from Imagen 4");
 
-  if (base64) {
-    return {
-      imageUrl: `data:image/png;base64,${base64}`,
-      imageBase64: base64,
-      finalPrompt: prompt,
-      model: "imagen-4",
-    };
-  }
-
-  throw new Error("No image returned from Imagen 4");
+  return { base64, prompt };
 }
 
 // ============================================
-// GEMINI — for logo/reference image composition
+// GEMINI — for reference image inspiration
 // ============================================
 async function generateWithGemini(
   prompt: string,
-  logo?: string,
-  referenceImage?: string
-): Promise<NanoBananaResponse> {
+  referenceImage: string
+): Promise<{ base64: string; prompt: string }> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${API_KEY}`;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const parts: any[] = [];
+  const refData = await imageToBase64Data(referenceImage);
+  const parts = [
+    { inlineData: refData },
+    { text: `Above is a REFERENCE IMAGE for style and visual inspiration. Create a completely NEW design inspired by its style, colors and mood.\n\n${prompt}` },
+  ];
 
-  // Reference image FIRST
-  if (referenceImage) {
-    const refData = await imageToBase64(referenceImage);
-    parts.push({ inlineData: refData });
-    parts.push({ text: "Above is a REFERENCE IMAGE. Use it as visual inspiration for style, colors and layout — but create a completely NEW design based on the prompt below." });
-  }
-
-  // Logo with strict instructions
-  if (logo) {
-    const logoData = await imageToBase64(logo);
-    parts.push({ inlineData: logoData });
-    parts.push({ text: "Above is the COMPANY LOGO. Place this logo EXACTLY as-is in the design. Do NOT modify, redraw or recreate the logo. Overlay the original logo image in a visible area." });
-  }
-
-  // Main prompt
-  parts.push({ text: prompt });
-
-  console.log("=== GEMINI REQUEST ===");
-  console.log("Parts:", parts.length);
-  console.log("Has logo:", !!logo);
-  console.log("Has reference:", !!referenceImage);
+  console.log("=== GEMINI (with reference) ===");
   console.log("Prompt:", prompt.slice(0, 300));
 
   const response = await fetch(url, {
@@ -125,33 +103,71 @@ async function generateWithGemini(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts }],
-      generationConfig: {
-        responseModalities: ["TEXT", "IMAGE"],
-      },
+      generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
     }),
   });
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`Gemini API error: ${response.status} - ${error}`);
+    throw new Error(`Gemini error: ${response.status} - ${error}`);
   }
 
   const data = await response.json();
-  const candidate = data.candidates?.[0];
-  const imagePart = candidate?.content?.parts?.find(
-    (p: { inlineData?: { mimeType: string; data: string } }) => p.inlineData?.mimeType?.startsWith("image/")
+  const imagePart = data.candidates?.[0]?.content?.parts?.find(
+    (p: { inlineData?: { data: string } }) => p.inlineData?.data
   );
 
-  if (imagePart?.inlineData) {
-    return {
-      imageUrl: `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`,
-      imageBase64: imagePart.inlineData.data,
-      finalPrompt: prompt,
-      model: "gemini-2.5-flash-image",
-    };
-  }
+  if (!imagePart?.inlineData?.data) throw new Error("No image from Gemini");
+  return { base64: imagePart.inlineData.data, prompt };
+}
 
-  throw new Error("No image returned from Gemini");
+// ============================================
+// OVERLAY LOGO — composição via sharp (nunca toca a logo)
+// ============================================
+async function overlayLogo(
+  imageBase64: string,
+  logoSrc: string
+): Promise<string> {
+  try {
+    const imageBuffer = Buffer.from(imageBase64, "base64");
+    const logoBuffer = await imageToBuffer(logoSrc);
+
+    // Get image dimensions
+    const imageMeta = await sharp(imageBuffer).metadata();
+    const imgW = imageMeta.width || 1024;
+    const imgH = imageMeta.height || 1024;
+
+    // Resize logo to ~15% of image width, maintain aspect ratio
+    const logoMaxW = Math.round(imgW * 0.15);
+    const logoMaxH = Math.round(imgH * 0.08);
+    const resizedLogo = await sharp(logoBuffer)
+      .resize(logoMaxW, logoMaxH, { fit: "inside", withoutEnlargement: true })
+      .png()
+      .toBuffer();
+
+    // Get resized logo dimensions
+    const logoMeta = await sharp(resizedLogo).metadata();
+    const logoW = logoMeta.width || logoMaxW;
+    const logoH = logoMeta.height || logoMaxH;
+
+    // Position: top-right corner with padding
+    const padding = Math.round(imgW * 0.03);
+    const left = imgW - logoW - padding;
+    const top = padding;
+
+    // Composite
+    const result = await sharp(imageBuffer)
+      .composite([{ input: resizedLogo, left, top }])
+      .png()
+      .toBuffer();
+
+    console.log(`Logo overlayed: ${logoW}x${logoH} at (${left},${top}) on ${imgW}x${imgH}`);
+
+    return result.toString("base64");
+  } catch (err) {
+    console.error("Logo overlay failed:", err);
+    return imageBase64; // Return original if overlay fails
+  }
 }
 
 // ============================================
@@ -160,11 +176,11 @@ async function generateWithGemini(
 export async function generateImage(
   req: NanoBananaRequest
 ): Promise<NanoBananaResponse> {
-  // Build the full prompt
+  // Build prompt
   let fullPrompt = req.prompt;
 
   if (req.style) {
-    fullPrompt += `\n\nVisual style: ${req.style}.`;
+    fullPrompt += `\nVisual style: ${req.style}.`;
   }
 
   if (req.colors) {
@@ -173,29 +189,37 @@ export async function generateImage(
     if (req.colors.secondary1) colorParts.push(`secondary color: ${req.colors.secondary1}`);
     if (req.colors.secondary2) colorParts.push(`accent color: ${req.colors.secondary2}`);
     if (colorParts.length > 0) {
-      fullPrompt += `\nUse these EXACT colors in the design: ${colorParts.join(", ")}.`;
+      fullPrompt += `\nUse these EXACT colors: ${colorParts.join(", ")}.`;
     }
   }
 
-  const hasImages = !!req.logo || !!req.referenceImage;
+  let result: { base64: string; prompt: string };
+  let model: string;
 
-  if (hasImages) {
-    // Use GEMINI when we have logo or reference images
-    // Add size hint in prompt (Gemini doesn't guarantee it but it helps)
-    if (req.aspectRatio) {
-      const sizeHints: Record<string, string> = {
-        "1:1": "square format (1:1)",
-        "9:16": "vertical Story format (9:16, tall portrait)",
-        "16:9": "wide banner format (16:9, landscape)",
-        "4:5": "slightly vertical format (4:5, portrait)",
-      };
-      fullPrompt += `\n\nImage format: ${sizeHints[req.aspectRatio] || req.aspectRatio}.`;
-    }
-    return generateWithGemini(fullPrompt, req.logo, req.referenceImage);
+  if (req.referenceImage) {
+    // Has reference image → use Gemini (can process images)
+    model = "gemini-2.5-flash-image";
+    result = await generateWithGemini(fullPrompt, req.referenceImage);
   } else {
-    // Use IMAGEN 4 for pure text — guarantees correct aspect ratio
-    return generateWithImagen(fullPrompt, req.aspectRatio || "1:1");
+    // Pure text → use Imagen 4 (guaranteed correct aspect ratio)
+    model = "imagen-4";
+    result = await generateWithImagen(fullPrompt, req.aspectRatio || "1:1");
   }
+
+  let finalBase64 = result.base64;
+
+  // Overlay logo via sharp — NEVER let AI touch the logo
+  if (req.logo) {
+    console.log("Overlaying logo via sharp...");
+    finalBase64 = await overlayLogo(finalBase64, req.logo);
+  }
+
+  return {
+    imageUrl: `data:image/png;base64,${finalBase64}`,
+    imageBase64: finalBase64,
+    finalPrompt: result.prompt,
+    model: req.logo ? `${model} + sharp-logo` : model,
+  };
 }
 
 export async function editImage(req: NanoBananaRequest): Promise<NanoBananaResponse> {
