@@ -2,7 +2,20 @@
 
 import { useState, useCallback } from "react";
 
-const actions = [
+interface SubOption {
+  label: string;
+  prompt: string;
+}
+
+interface Action {
+  id: string;
+  label: string;
+  icon: string;
+  prompt: string;
+  subOptions?: SubOption[];
+}
+
+const actions: Action[] = [
   {
     id: "remove-bg",
     label: "Remover Fundo",
@@ -19,25 +32,53 @@ const actions = [
     id: "lifestyle",
     label: "Cenário Lifestyle",
     icon: "🏠",
-    prompt: "Place this eyewear product in a lifestyle scene, modern and elegant setting",
+    prompt: "Place this eyewear product in a lifestyle scene",
+    subOptions: [
+      { label: "Mesa de café com livro", prompt: "Place this eyewear on a wooden coffee table next to an open book and a cup of coffee, warm natural light, cozy lifestyle scene" },
+      { label: "Beira da piscina", prompt: "Place this eyewear by a swimming pool edge on a white towel, summer vibes, bright sunny day, luxury resort feel" },
+      { label: "Mesa de escritório moderna", prompt: "Place this eyewear on a modern minimalist desk with a laptop and plant, clean professional workspace" },
+      { label: "Bancada de mármore", prompt: "Place this eyewear on a white marble countertop with a perfume bottle nearby, luxury lifestyle, soft lighting" },
+      { label: "Piquenique ao ar livre", prompt: "Place this eyewear on a picnic blanket in a green park, natural sunlight, relaxed outdoor lifestyle" },
+    ],
   },
   {
     id: "vitrine",
     label: "Cenário Vitrine",
     icon: "🪟",
-    prompt: "Place this eyewear product in a premium store display/vitrine setting",
+    prompt: "Place this eyewear product in a premium store display",
+    subOptions: [
+      { label: "Vitrine premium iluminada", prompt: "Place this eyewear in a premium glass display case with LED spotlights, dark background, luxury store aesthetic" },
+      { label: "Expositor de madeira", prompt: "Place this eyewear on a wooden display stand in a boutique store, warm ambient lighting, artisan feel" },
+      { label: "Prateleira minimalista", prompt: "Place this eyewear on a floating white shelf against a clean wall, minimalist modern optical store" },
+      { label: "Display com espelho", prompt: "Place this eyewear on a mirrored display surface, showing the reflection, upscale store environment" },
+      { label: "Balcão de atendimento", prompt: "Place this eyewear on a sleek store counter with soft backlighting, ready for customer viewing" },
+    ],
   },
   {
     id: "studio",
     label: "Cenário Estúdio",
     icon: "📸",
-    prompt: "Place this eyewear product on a clean studio background with professional lighting",
+    prompt: "Place this eyewear product on a clean studio background",
+    subOptions: [
+      { label: "Fundo branco infinito", prompt: "Place this eyewear on a pure white infinite background, clean studio shot with soft shadow, product photography" },
+      { label: "Fundo gradiente cinza", prompt: "Place this eyewear floating on a smooth gray gradient background, professional studio lighting from above" },
+      { label: "Fundo colorido vibrante", prompt: "Place this eyewear on a bold vibrant colored background, pop art style studio shot, high contrast" },
+      { label: "Sobre superfície refletiva", prompt: "Place this eyewear on a black reflective surface, dramatic studio lighting, high-end product photography" },
+      { label: "Com sombra artística", prompt: "Place this eyewear on a beige surface with dramatic side lighting creating artistic shadows, editorial style" },
+    ],
   },
   {
     id: "variations",
     label: "Gerar Variações",
     icon: "🔄",
     prompt: "Generate creative variations of this eyewear product photo",
+    subOptions: [
+      { label: "Variação de cores", prompt: "Generate color variations of this eyewear, show the same frame in different colors (black, tortoise, clear, blue)" },
+      { label: "Ângulos diferentes", prompt: "Show this eyewear from different angles: front view, 3/4 view, side profile, and folded" },
+      { label: "Com diferentes lentes", prompt: "Show this eyewear frame with different lens options: clear, gradient, mirror, polarized" },
+      { label: "Estilo flat lay", prompt: "Create a flat lay composition of this eyewear with accessories: case, cleaning cloth, and box" },
+      { label: "Composição artística", prompt: "Create an artistic editorial composition of this eyewear with dramatic lighting and creative positioning" },
+    ],
   },
 ];
 
@@ -45,8 +86,9 @@ export default function EditorPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
+  const [selectedSub, setSelectedSub] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<string[]>([]);
+  const [results, setResults] = useState<{ url: string; prompt: string; saved: boolean; saving: boolean }[]>([]);
 
   const handleFiles = useCallback((newFiles: FileList | null) => {
     if (!newFiles) return;
@@ -54,20 +96,19 @@ export default function EditorPage() {
     setFiles((prev) => [...prev, ...fileArray]);
     fileArray.forEach((file) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreviews((prev) => [...prev, e.target?.result as string]);
-      };
+      reader.onload = (e) => setPreviews((prev) => [...prev, e.target?.result as string]);
       reader.readAsDataURL(file);
     });
   }, []);
 
+  const currentAction = actions.find((a) => a.id === selectedAction);
+  const currentPrompt = selectedSub || currentAction?.prompt || "";
+
   const handleProcess = async () => {
-    if (!files.length || !selectedAction) return;
+    if (!files.length || !currentPrompt) return;
     setLoading(true);
-    const action = actions.find((a) => a.id === selectedAction);
 
     try {
-      // Convert first file to base64
       const reader = new FileReader();
       reader.readAsDataURL(files[0]);
       reader.onload = async () => {
@@ -76,14 +117,16 @@ export default function EditorPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prompt: action?.prompt || "",
-            referenceImages: [base64],
+            prompt: currentPrompt,
+            referenceImage: base64,
             tool: "EDITOR",
           }),
         });
         const data = await res.json();
-        if (data.imageUrl) {
-          setResults((prev) => [data.imageUrl, ...prev]);
+        if (data.error) {
+          alert(`Erro: ${data.error}`);
+        } else if (data.imageUrl) {
+          setResults((prev) => [{ url: data.imageUrl, prompt: currentPrompt, saved: false, saving: false }, ...prev]);
         }
         setLoading(false);
       };
@@ -96,102 +139,153 @@ export default function EditorPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       <div>
-        <h1 className="text-2xl font-bold font-[var(--font-heading)]">
+        <h1 className="text-2xl font-[700] font-[var(--font-heading)] tracking-tight">
           Editor de Produtos
         </h1>
         <p className="text-text-secondary text-sm mt-1">
-          Edite fotos dos seus produtos com IA. Remova fundos, mude cenários e
-          mais.
+          Edite fotos dos seus produtos com IA. Remova fundos, mude cenários e mais.
         </p>
       </div>
 
-      {/* Upload area */}
-      <div className="rounded-[16px] border border-border bg-bg-card p-6">
-        <div
-          className="border-2 border-dashed border-border rounded-[12px] p-8 text-center hover:border-accent-green/30 transition-colors cursor-pointer"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            handleFiles(e.dataTransfer.files);
-          }}
-          onClick={() => {
-            const input = document.createElement("input");
-            input.type = "file";
-            input.multiple = true;
-            input.accept = "image/*";
-            input.onchange = (e) =>
-              handleFiles((e.target as HTMLInputElement).files);
-            input.click();
-          }}
-        >
-          <div className="text-4xl mb-3 opacity-30">📸</div>
-          <p className="text-sm text-text-secondary mb-1">
-            Arraste fotos aqui ou clique para upload
-          </p>
-          <p className="text-xs text-text-muted">
-            PNG, JPG, WebP — até 10 imagens por vez
-          </p>
+      {/* Step 1: Choose action FIRST */}
+      <div>
+        <h2 className="text-sm font-[600] text-text-muted mb-3 uppercase tracking-wider flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-accent-green/20 text-accent-green text-xs font-bold flex items-center justify-center">1</span>
+          O que deseja fazer?
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {actions.map((action) => (
+            <button
+              key={action.id}
+              onClick={() => {
+                setSelectedAction(action.id);
+                setSelectedSub(null);
+              }}
+              className={`btn-press p-4 rounded-xl border text-left transition-all ${
+                selectedAction === action.id
+                  ? "border-accent-green/40 bg-accent-green/5"
+                  : "border-border bg-bg-card hover:bg-bg-card-hover"
+              }`}
+            >
+              <span className="text-2xl block mb-2">{action.icon}</span>
+              <span className="text-sm font-medium">{action.label}</span>
+            </button>
+          ))}
         </div>
-
-        {/* Previews */}
-        {previews.length > 0 && (
-          <div className="mt-4 grid grid-cols-3 sm:grid-cols-5 gap-3">
-            {previews.map((src, i) => (
-              <div
-                key={i}
-                className="relative aspect-square rounded-[10px] overflow-hidden border border-border"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={src}
-                  alt={`Upload ${i + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setFiles((prev) => prev.filter((_, idx) => idx !== i));
-                    setPreviews((prev) => prev.filter((_, idx) => idx !== i));
-                  }}
-                  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-bg-deep/80 flex items-center justify-center text-xs text-text-muted hover:text-accent-rose"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* Actions */}
-      {previews.length > 0 && (
+      {/* Sub-options */}
+      {currentAction?.subOptions && (
         <div>
-          <h2 className="text-lg font-bold font-[var(--font-heading)] mb-4">
-            O que deseja fazer?
+          <h2 className="text-sm font-[600] text-text-muted mb-3 uppercase tracking-wider">
+            Escolha uma variação de {currentAction.label}
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {actions.map((action) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {currentAction.subOptions.map((sub) => (
               <button
-                key={action.id}
-                onClick={() => setSelectedAction(action.id)}
-                className={`p-4 rounded-[12px] border text-left transition-all ${
-                  selectedAction === action.id
-                    ? "border-accent-green/40 bg-accent-green/5"
-                    : "border-border bg-bg-card hover:bg-bg-card-hover"
+                key={sub.label}
+                onClick={() => setSelectedSub(sub.prompt)}
+                className={`btn-press p-3 rounded-lg border text-left transition-all text-xs ${
+                  selectedSub === sub.prompt
+                    ? "border-accent-green/40 bg-accent-green/5 text-accent-green"
+                    : "border-border bg-bg-card text-text-secondary hover:bg-bg-card-hover hover:text-text-primary"
                 }`}
               >
-                <span className="text-2xl block mb-2">{action.icon}</span>
-                <span className="text-sm font-medium">{action.label}</span>
+                {sub.label}
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Step 2: Upload image */}
+      <div>
+        <h2 className="text-sm font-[600] text-text-muted mb-3 uppercase tracking-wider flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-accent-green/20 text-accent-green text-xs font-bold flex items-center justify-center">2</span>
+          Suba a foto do produto
+        </h2>
+        <div className="rounded-2xl card-base p-6">
+          <div
+            className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-accent-green/30 transition-colors cursor-pointer"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              handleFiles(e.dataTransfer.files);
+            }}
+            onClick={() => {
+              const input = document.createElement("input");
+              input.type = "file";
+              input.multiple = true;
+              input.accept = "image/*";
+              input.onchange = (e) => handleFiles((e.target as HTMLInputElement).files);
+              input.click();
+            }}
+          >
+            <svg className="w-8 h-8 mx-auto text-text-muted/30 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            </svg>
+            <p className="text-sm text-text-secondary mb-1">Arraste fotos aqui ou clique para upload</p>
+            <p className="text-xs text-text-muted">PNG, JPG, WebP — até 10 imagens por vez</p>
+          </div>
+
+          {previews.length > 0 && (
+            <div className="mt-4 grid grid-cols-3 sm:grid-cols-5 gap-3">
+              {previews.map((src, i) => (
+                <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt={`Upload ${i + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFiles((prev) => prev.filter((_, idx) => idx !== i));
+                      setPreviews((prev) => prev.filter((_, idx) => idx !== i));
+                    }}
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-bg-deep/80 flex items-center justify-center text-xs text-text-muted hover:text-accent-rose"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Step 3: Prompt preview + Process */}
+      {selectedAction && previews.length > 0 && (
+        <div>
+          <h2 className="text-sm font-[600] text-text-muted mb-3 uppercase tracking-wider flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-accent-green/20 text-accent-green text-xs font-bold flex items-center justify-center">3</span>
+            Processar
+          </h2>
+
+          {/* Show prompt that will be sent */}
+          <div className="p-3 rounded-xl bg-bg-elevated border border-border mb-4">
+            <span className="text-[10px] text-text-muted uppercase tracking-wider block mb-1">Prompt que será enviado:</span>
+            <p className="text-xs text-text-secondary font-mono leading-relaxed">{currentPrompt}</p>
           </div>
 
           <button
             onClick={handleProcess}
-            disabled={loading || !selectedAction}
-            className="mt-6 px-8 py-3 rounded-[10px] bg-gradient-to-r from-accent-green to-accent-teal text-bg-deep font-bold text-sm hover:shadow-[0_0_20px_rgba(3,255,148,0.3)] transition-all disabled:opacity-50"
+            disabled={loading || !currentPrompt}
+            className="btn-press px-10 py-3.5 rounded-xl bg-gradient-to-r from-accent-green to-accent-teal text-bg-deep font-bold text-sm hover:shadow-[0_0_30px_rgba(3,255,148,0.25)] transition-all disabled:opacity-40 flex items-center gap-2"
           >
-            {loading ? "Processando..." : "Processar"}
+            {loading ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Processando...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Processar
+              </>
+            )}
           </button>
         </div>
       )}
@@ -199,31 +293,99 @@ export default function EditorPage() {
       {/* Results */}
       {results.length > 0 && (
         <div>
-          <h2 className="text-lg font-bold font-[var(--font-heading)] mb-4">
-            Resultados
-          </h2>
+          <h2 className="text-lg font-[700] font-[var(--font-heading)] mb-4 tracking-tight">Resultados</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {results.map((url, i) => (
-              <div
-                key={i}
-                className="rounded-[16px] border border-border bg-bg-card overflow-hidden"
-              >
+            {results.map((item, i) => (
+              <div key={i} className="rounded-2xl card-base overflow-hidden">
                 <div className="aspect-square bg-bg-card-hover">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={url}
-                    alt={`Resultado ${i + 1}`}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={item.url} alt={`Resultado ${i + 1}`} className="w-full h-full object-cover" />
                 </div>
-                <div className="p-3">
-                  <button className="w-full py-2 rounded-[8px] text-xs font-medium bg-accent-green/10 text-accent-green hover:bg-accent-green/20 transition-colors">
-                    Download
-                  </button>
+                <div className="p-3 space-y-2">
+                  {/* Save to gallery */}
+                  {!item.saved ? (
+                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-accent-amber/[0.06] border border-accent-amber/15">
+                      <svg className="w-4 h-4 text-accent-amber shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                      </svg>
+                      <span className="text-[11px] text-accent-amber/80 flex-1">Salvar na galeria?</span>
+                      <button
+                        onClick={async () => {
+                          setResults(prev => prev.map((r, idx) => idx === i ? { ...r, saving: true } : r));
+                          try {
+                            await fetch("/api/gallery", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                imageUrl: item.url,
+                                tool: "EDITOR",
+                                prompt: item.prompt,
+                                metadata: { action: selectedAction },
+                              }),
+                            });
+                            setResults(prev => prev.map((r, idx) => idx === i ? { ...r, saved: true, saving: false } : r));
+                          } catch {
+                            setResults(prev => prev.map((r, idx) => idx === i ? { ...r, saving: false } : r));
+                          }
+                        }}
+                        disabled={item.saving}
+                        className="btn-press px-3 py-1 rounded-md text-[11px] font-bold bg-accent-green/20 text-accent-green hover:bg-accent-green/30 transition-colors"
+                      >
+                        {item.saving ? "..." : "Salvar"}
+                      </button>
+                      <button
+                        onClick={() => setResults(prev => prev.map((r, idx) => idx === i ? { ...r, saved: true } : r))}
+                        className="text-[11px] text-text-muted hover:text-text-secondary transition-colors"
+                      >
+                        Não
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] text-accent-green/70">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Salvo na galeria
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <a href={item.url} download target="_blank" className="btn-press flex-1 py-2.5 rounded-lg text-xs font-bold bg-accent-green/10 text-accent-green hover:bg-accent-green/20 transition-colors text-center">
+                      Download HD
+                    </a>
+                    <button className="btn-press flex-1 py-2.5 rounded-lg text-xs font-medium border border-border text-text-secondary hover:border-accent-green/30 hover:text-accent-green transition-colors">
+                      Compartilhar
+                    </button>
+                  </div>
+
+                  {/* Debug: prompt enviado */}
+                  <details>
+                    <summary className="text-[10px] text-text-muted cursor-pointer hover:text-text-secondary">
+                      Ver prompt enviado
+                    </summary>
+                    <pre className="mt-1 p-2 rounded-lg bg-bg-deep border border-border text-[10px] font-mono text-text-muted whitespace-pre-wrap max-h-32 overflow-y-auto">
+                      {item.prompt}
+                    </pre>
+                  </details>
                 </div>
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="rounded-2xl card-base overflow-hidden animate-pulse">
+              <div className="aspect-square bg-bg-card-hover" />
+              <div className="p-3 flex gap-2">
+                <div className="flex-1 h-9 rounded-lg bg-bg-card-hover" />
+                <div className="flex-1 h-9 rounded-lg bg-bg-card-hover" />
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
