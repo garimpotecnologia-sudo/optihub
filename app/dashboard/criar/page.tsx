@@ -46,8 +46,11 @@ export default function CriarPage() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<{ url: string; saved: boolean; saving: boolean }[]>([]);
   const [logo, setLogo] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [savedLogo, setSavedLogo] = useState<string | null>(null);
   const [useLogo, setUseLogo] = useState(false);
+  const [logoSaving, setLogoSaving] = useState(false);
+  const [logoError, setLogoError] = useState("");
   const [refImage, setRefImage] = useState<string | null>(null);
   const [showPrompts, setShowPrompts] = useState(false);
   const [promptCat, setPromptCat] = useState("Todos");
@@ -70,9 +73,11 @@ export default function CriarPage() {
     loadLogo();
   }, [supabase]);
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setLogoFile(file);
+    setLogoError("");
     const reader = new FileReader();
     reader.onload = (ev) => setLogo(ev.target?.result as string);
     reader.readAsDataURL(file);
@@ -87,23 +92,60 @@ export default function CriarPage() {
   }, []);
 
   const handleSaveLogo = async () => {
-    if (!logo) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const base64 = logo.split(",")[1];
-    if (!base64) return;
-    const buffer = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-    const fileName = `logos/${user.id}/logo.png`;
-    const { data: uploadData } = await supabase.storage
-      .from("generations")
-      .upload(fileName, buffer, { contentType: "image/png", upsert: true });
-    if (uploadData) {
-      const { data: urlData } = supabase.storage
-        .from("generations")
-        .getPublicUrl(uploadData.path);
-      await supabase.from("profiles").update({ optica_logo: urlData.publicUrl }).eq("id", user.id);
-      setSavedLogo(urlData.publicUrl);
-      setLogo(urlData.publicUrl);
+    if (!logoFile && !logo) return;
+    setLogoSaving(true);
+    setLogoError("");
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLogoError("Faça login primeiro"); setLogoSaving(false); return; }
+
+      const fileName = `logos/${user.id}/logo-${Date.now()}.png`;
+
+      let uploadResult;
+
+      if (logoFile) {
+        // Upload File object directly — most reliable
+        uploadResult = await supabase.storage
+          .from("generations")
+          .upload(fileName, logoFile, { contentType: logoFile.type, upsert: true });
+      } else if (logo && logo.startsWith("data:")) {
+        // Fallback: convert base64 data URL to blob
+        const res = await fetch(logo);
+        const blob = await res.blob();
+        uploadResult = await supabase.storage
+          .from("generations")
+          .upload(fileName, blob, { contentType: "image/png", upsert: true });
+      }
+
+      if (uploadResult?.error) {
+        setLogoError(`Erro: ${uploadResult.error.message}`);
+        setLogoSaving(false);
+        return;
+      }
+
+      if (uploadResult?.data) {
+        const { data: urlData } = supabase.storage
+          .from("generations")
+          .getPublicUrl(uploadResult.data.path);
+
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ optica_logo: urlData.publicUrl })
+          .eq("id", user.id);
+
+        if (updateError) {
+          setLogoError(`Erro ao salvar perfil: ${updateError.message}`);
+        } else {
+          setSavedLogo(urlData.publicUrl);
+          setLogo(urlData.publicUrl);
+          setLogoFile(null);
+        }
+      }
+    } catch (err) {
+      setLogoError(`Erro inesperado: ${err}`);
+    } finally {
+      setLogoSaving(false);
     }
   };
 
@@ -286,18 +328,28 @@ export default function CriarPage() {
                     Incluir na arte
                   </button>
                   {logo && logo !== savedLogo && (
-                    <button onClick={handleSaveLogo} className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-accent-teal/10 text-accent-teal border border-accent-teal/20 hover:bg-accent-teal/20 transition-all">
-                      Salvar
+                    <button
+                      onClick={handleSaveLogo}
+                      disabled={logoSaving}
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-accent-teal/10 text-accent-teal border border-accent-teal/20 hover:bg-accent-teal/20 transition-all disabled:opacity-50"
+                    >
+                      {logoSaving ? "Salvando..." : "Salvar"}
                     </button>
                   )}
                 </div>
-                {savedLogo && (
+                {logoError && (
+                  <p className="text-[10px] text-accent-rose flex items-center gap-1">
+                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    {logoError}
+                  </p>
+                )}
+                {savedLogo && !logoError && (
                   <p className="text-[10px] text-accent-green/70 flex items-center gap-1">
                     <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                     Salva no perfil
                   </p>
                 )}
-                {!logo && <p className="text-[10px] text-text-muted">Suba a logo para incluir nas artes</p>}
+                {!logo && !logoError && <p className="text-[10px] text-text-muted">Suba a logo para incluir nas artes</p>}
               </div>
             </div>
           </div>
