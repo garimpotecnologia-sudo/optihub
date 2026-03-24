@@ -12,7 +12,7 @@ interface NanoBananaResponse {
 
 const API_URL =
   process.env.NANO_BANANA_API_URL ||
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent";
 const API_KEY = process.env.NANO_BANANA_API_KEY || "";
 
 export async function generateImage(
