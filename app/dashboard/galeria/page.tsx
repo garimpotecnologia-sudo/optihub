@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase";
 
 type Tool = "TODOS" | "CRIADOR" | "EDITOR" | "TRYON" | "ASSISTENTE";
@@ -41,7 +41,8 @@ export default function GaleriaPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tool>("TODOS");
   const [deleting, setDeleting] = useState<string | null>(null);
-  const supabase = createClient();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     loadGallery();

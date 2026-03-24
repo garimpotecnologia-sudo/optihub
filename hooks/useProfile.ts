@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase";
 
 interface Profile {
@@ -27,7 +27,8 @@ const PLAN_LIMITS: Record<string, number> = {
 export function useProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     async function load() {
@@ -41,7 +42,6 @@ export function useProfile() {
         .single();
 
       if (data) {
-        // Get monthly usage
         const { data: usage } = await supabase.rpc("get_monthly_usage", {
           p_user_id: user.id,
         });

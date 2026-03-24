@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase";
 
 const formatos = [
@@ -54,7 +54,8 @@ export default function CriarPage() {
   const [refImage, setRefImage] = useState<string | null>(null);
   const [showPrompts, setShowPrompts] = useState(false);
   const [promptCat, setPromptCat] = useState("Todos");
-  const supabase = createClient();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     async function loadLogo() {
