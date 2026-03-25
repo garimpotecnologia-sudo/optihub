@@ -24,7 +24,14 @@ export default function ProductCheckout({ product, onSuccess, onBack }: ProductC
   const [billingType, setBillingType] = useState<BillingType>("PIX");
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [error, setError] = useState("");
-  const [paymentData, setPaymentData] = useState<Record<string, unknown> | null>(null);
+  const [paymentData, setPaymentData] = useState<{
+    pix?: { qrCode: string; copyPaste: string; expirationDate: string };
+    boletoUrl?: string;
+    invoiceUrl?: string;
+    subscriptionId?: string;
+    paymentId?: string;
+    status?: string;
+  } | null>(null);
 
   const formatCpfCnpj = (value: string) => {
     const digits = value.replace(/\D/g, "");
@@ -52,15 +59,16 @@ export default function ProductCheckout({ product, onSuccess, onBack }: ProductC
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ product, billingType, cpfCnpj }),
       });
-      const data = await res.json();
+      const data = await res.json() as Record<string, unknown>;
       if (!res.ok) {
-        setError(data.error || "Erro ao processar");
+        setError((data.error as string) || "Erro ao processar");
         setStep("cpf");
         return;
       }
-      setPaymentData(data);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setPaymentData(data as any);
       if (billingType === "CREDIT_CARD" && data.invoiceUrl) {
-        window.open(data.invoiceUrl, "_blank");
+        window.open(data.invoiceUrl as string, "_blank");
       }
       setStep("waiting");
 
@@ -169,17 +177,17 @@ export default function ProductCheckout({ product, onSuccess, onBack }: ProductC
 
       {step === "waiting" && paymentData && (
         <div className="card-base rounded-2xl p-6 space-y-4">
-          {billingType === "PIX" && (paymentData.pix as Record<string, string>)?.copyPaste && (
+          {billingType === "PIX" && paymentData.pix?.copyPaste && (
             <>
               <p className="text-sm font-medium text-text-secondary">Copie o código PIX:</p>
               <div className="relative">
                 <input
                   readOnly
-                  value={(paymentData.pix as Record<string, string>).copyPaste}
+                  value={paymentData.pix.copyPaste}
                   className="w-full px-4 py-3 pr-20 rounded-xl bg-bg-deep border border-border text-xs font-mono text-text-muted"
                 />
                 <button
-                  onClick={() => navigator.clipboard.writeText((paymentData.pix as Record<string, string>).copyPaste)}
+                  onClick={() => navigator.clipboard.writeText(paymentData.pix!.copyPaste)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-accent-green/10 text-accent-green text-xs font-medium hover:bg-accent-green/20 transition-colors"
                 >
                   Copiar
@@ -189,7 +197,7 @@ export default function ProductCheckout({ product, onSuccess, onBack }: ProductC
             </>
           )}
           {billingType === "BOLETO" && paymentData.boletoUrl && (
-            <a href={paymentData.boletoUrl as string} target="_blank" rel="noopener noreferrer"
+            <a href={paymentData.boletoUrl} target="_blank" rel="noopener noreferrer"
               className="btn-press btn-primary block w-full py-3.5 rounded-xl text-bg-deep font-bold text-sm text-center">
               Abrir Boleto
             </a>
