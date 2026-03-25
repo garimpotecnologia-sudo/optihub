@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
+import { PLAN_LIMITS_DISPLAY } from "@/lib/plans";
 
 interface Profile {
   id: string;
@@ -15,14 +16,9 @@ interface Profile {
   plan: "STARTER" | "PRO" | "REDE";
   credits: number;
   custom_api_key: string | null;
+  subscription_status?: string | null;
   monthlyUsage?: number;
 }
-
-const PLAN_LIMITS: Record<string, number> = {
-  STARTER: 30,
-  PRO: 500,
-  REDE: 999999,
-};
 
 export function useProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -52,7 +48,7 @@ export function useProfile() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const planLimit = profile ? PLAN_LIMITS[profile.plan] || 30 : 30;
+  const planLimit = profile ? PLAN_LIMITS_DISPLAY[profile.plan] || 30 : 30;
 
   return { profile, loading, planLimit, supabase };
 }

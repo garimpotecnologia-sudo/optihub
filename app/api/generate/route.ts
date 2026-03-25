@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { createAdminSupabase } from "@/lib/supabase-admin";
 import { generateImage } from "@/lib/nano-banana";
+import { PLAN_LIMITS } from "@/lib/plans";
 
-const PLAN_LIMITS: Record<string, number> = {
-  STARTER: 30,
-  PRO: 500,
-  REDE: Infinity,
-};
+const GRACE_PERIOD_DAYS = 3;
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("plan, credits, custom_api_key")
+      .select("plan, credits, custom_api_key, subscription_status")
       .eq("id", user.id)
       .single();
 
@@ -27,12 +25,54 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Perfil não encontrado" }, { status: 404 });
     }
 
+    // Check grace period for overdue subscriptions
+    if (profile.subscription_status === "OVERDUE") {
+      const { data: sub } = await supabase
+        .from("subscriptions")
+        .select("overdue_since")
+        .eq("user_id", user.id)
+        .eq("status", "OVERDUE")
+        .single();
+
+      if (sub?.overdue_since) {
+        const daysSince =
+          (Date.now() - new Date(sub.overdue_since).getTime()) /
+          (1000 * 60 * 60 * 24);
+
+        if (daysSince >= GRACE_PERIOD_DAYS) {
+          // Grace period expired — downgrade
+          const admin = createAdminSupabase();
+          await admin
+            .from("profiles")
+            .update({ plan: "STARTER", subscription_status: null })
+            .eq("id", user.id);
+          await admin
+            .from("subscriptions")
+            .update({
+              status: "CANCELLED",
+              cancelled_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("user_id", user.id)
+            .eq("status", "OVERDUE");
+
+          return NextResponse.json(
+            {
+              error:
+                "Sua assinatura foi cancelada por inadimplência. Faça upgrade novamente.",
+            },
+            { status: 429 }
+          );
+        }
+      }
+    }
+
     const { data: usageData } = await supabase.rpc("get_monthly_usage", {
       p_user_id: user.id,
     });
 
     const usage = usageData || 0;
-    const limit = PLAN_LIMITS[profile.plan] || 30;
+    const limit = PLAN_LIMITS[profile.plan as keyof typeof PLAN_LIMITS] || 30;
 
     if (usage >= limit) {
       return NextResponse.json(
