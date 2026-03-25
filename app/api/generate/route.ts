@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
       aspectRatio: ratio,
       style: estilo,
       colors,
+      tool: tool || "CRIADOR",
     });
 
     // Upload to Supabase Storage — always try to get a real URL

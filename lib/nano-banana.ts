@@ -7,6 +7,7 @@ interface NanoBananaRequest {
   aspectRatio?: "1:1" | "9:16" | "16:9" | "4:5";
   style?: string;
   colors?: { primary?: string; secondary1?: string; secondary2?: string };
+  tool?: string;
 }
 
 interface NanoBananaResponse {
@@ -122,6 +123,47 @@ async function generateWithGemini(
 }
 
 // ============================================
+// GEMINI — direct image editing (for EDITOR tool)
+// ============================================
+async function editWithGemini(
+  prompt: string,
+  sourceImage: string
+): Promise<{ base64: string; prompt: string }> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${API_KEY}`;
+
+  const imgData = await imageToBase64Data(sourceImage);
+  const parts = [
+    { inlineData: imgData },
+    { text: `This is the ACTUAL product photo that you must EDIT directly. Do NOT create a new image from scratch. Apply the following edit to THIS EXACT photo, preserving the product exactly as it is:\n\n${prompt}` },
+  ];
+
+  console.log("=== GEMINI (direct edit) ===");
+  console.log("Prompt:", prompt.slice(0, 300));
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts }],
+      generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Gemini edit error: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+  const imagePart = data.candidates?.[0]?.content?.parts?.find(
+    (p: { inlineData?: { data: string } }) => p.inlineData?.data
+  );
+
+  if (!imagePart?.inlineData?.data) throw new Error("No image from Gemini edit");
+  return { base64: imagePart.inlineData.data, prompt };
+}
+
+// ============================================
 // OVERLAY LOGO — composição via sharp (nunca toca a logo)
 // ============================================
 async function overlayLogo(
@@ -193,8 +235,12 @@ export async function generateImage(
   let result: { base64: string; prompt: string };
   let model: string;
 
-  if (req.referenceImage) {
-    // Has reference image → use Gemini (can process images)
+  if (req.tool === "EDITOR" && req.referenceImage) {
+    // EDITOR tool: edit the actual product photo directly
+    model = "gemini-2.5-flash-edit";
+    result = await editWithGemini(fullPrompt, req.referenceImage);
+  } else if (req.referenceImage) {
+    // Has reference image → use Gemini for style inspiration
     model = "gemini-2.5-flash-image";
     result = await generateWithGemini(fullPrompt, req.referenceImage);
   } else {
