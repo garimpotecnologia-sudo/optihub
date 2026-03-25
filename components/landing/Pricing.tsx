@@ -17,6 +17,7 @@ const plans = [
       "Templates básicos",
     ],
     cta: "Começar Grátis",
+    href: "/register",
     style: "card-base rounded-2xl",
     badge: null,
     accent: "accent-emerald",
@@ -36,6 +37,7 @@ const plans = [
       "Suporte prioritário",
     ],
     cta: "Assinar Pro",
+    href: "/dashboard/upgrade",
     style: "card-featured rounded-2xl scale-[1.03] shadow-[0_0_60px_rgba(3,255,148,0.06)]",
     badge: "Mais Popular",
     accent: "accent-green",
@@ -55,6 +57,7 @@ const plans = [
       "Integração WhatsApp",
     ],
     cta: "Falar com Vendas",
+    href: "https://wa.me/5500000000000",
     style: "card-base rounded-2xl",
     badge: null,
     accent: "accent-violet",
@@ -142,7 +145,7 @@ export default function Pricing() {
               </ul>
 
               <Link
-                href="/register"
+                href={plan.href}
                 className={`btn-press block w-full text-center py-3.5 rounded-xl font-bold text-sm transition-all duration-300 ${
                   plan.accent === "accent-green"
                     ? "bg-gradient-to-r from-accent-green to-accent-teal text-bg-deep hover:shadow-[0_0_30px_rgba(3,255,148,0.2)]"

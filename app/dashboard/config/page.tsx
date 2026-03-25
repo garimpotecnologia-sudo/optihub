@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useProfile } from "@/hooks/useProfile";
 
 export default function ConfigPage() {
@@ -123,10 +124,14 @@ export default function ConfigPage() {
             <span className="text-xs text-text-muted ml-2">{profile?.plan === "STARTER" ? "Grátis" : profile?.plan === "PRO" ? "R$97/mês" : "R$247/mês"}</span>
             <p className="text-xs text-text-muted mt-1">{usage} de {planLimit === 999999 ? "∞" : planLimit} gerações usadas este mês</p>
           </div>
-          {profile?.plan === "STARTER" && (
-            <button className="px-4 py-2 rounded-[10px] bg-accent-green/10 text-accent-green text-sm font-medium hover:bg-accent-green/20 transition-colors">
+          {profile?.plan === "STARTER" ? (
+            <Link href="/dashboard/upgrade" className="px-4 py-2 rounded-[10px] bg-accent-green/10 text-accent-green text-sm font-medium hover:bg-accent-green/20 transition-colors">
               Upgrade para Pro
-            </button>
+            </Link>
+          ) : (
+            <Link href="/dashboard/billing" className="px-4 py-2 rounded-[10px] bg-accent-green/10 text-accent-green text-sm font-medium hover:bg-accent-green/20 transition-colors">
+              Gerenciar Assinatura
+            </Link>
           )}
         </div>
         <div className="flex items-center gap-3">

@@ -273,12 +273,4 @@ export async function composeImages(req: NanoBananaRequest): Promise<NanoBananaR
   return generateImage(req);
 }
 
-export const PLAN_LIMITS = {
-  STARTER: 30,
-  PRO: 500,
-  REDE: Infinity,
-} as const;
-
-export function canGenerate(plan: keyof typeof PLAN_LIMITS, usedThisMonth: number): boolean {
-  return usedThisMonth < PLAN_LIMITS[plan];
-}
+export { PLAN_LIMITS, canGenerate } from "./plans";

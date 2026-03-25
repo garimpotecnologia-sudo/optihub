@@ -16,6 +16,8 @@ create table public.profiles (
   plan text not null default 'STARTER' check (plan in ('STARTER', 'PRO', 'REDE')),
   credits int not null default 30,
   custom_api_key text,
+  asaas_customer_id text,
+  subscription_status text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -73,6 +75,56 @@ create table public.chat_messages (
   created_at timestamptz not null default now()
 );
 
+-- 7. Assinaturas (billing via ASAAS)
+create table public.subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  asaas_customer_id text not null,
+  asaas_subscription_id text not null unique,
+  plan text not null default 'PRO' check (plan in ('PRO')),
+  status text not null default 'PENDING'
+    check (status in ('PENDING', 'ACTIVE', 'OVERDUE', 'CANCELLED', 'EXPIRED')),
+  overdue_since timestamptz,
+  billing_type text not null check (billing_type in ('PIX', 'BOLETO', 'CREDIT_CARD')),
+  value numeric(10,2) not null,
+  next_due_date date,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  cancelled_at timestamptz
+);
+
+-- 8. Pagamentos
+create table public.payments (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  subscription_id uuid references public.subscriptions(id) on delete set null,
+  asaas_payment_id text not null unique,
+  status text not null
+    check (status in ('PENDING', 'CONFIRMED', 'RECEIVED', 'OVERDUE', 'REFUNDED', 'DELETED', 'FAILED')),
+  billing_type text not null check (billing_type in ('PIX', 'BOLETO', 'CREDIT_CARD')),
+  value numeric(10,2) not null,
+  net_value numeric(10,2),
+  due_date date not null,
+  payment_date date,
+  invoice_url text,
+  pix_qr_code text,
+  pix_copy_paste text,
+  boleto_url text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- 9. Eventos de webhook (idempotência)
+create table public.webhook_events (
+  id uuid primary key default gen_random_uuid(),
+  event_type text not null,
+  asaas_event_id text unique,
+  payload jsonb not null,
+  processed boolean not null default false,
+  error text,
+  created_at timestamptz not null default now()
+);
+
 -- ============================================
 -- Indexes
 -- ============================================
@@ -83,6 +135,15 @@ create index idx_community_posts_likes on public.community_posts(likes_count des
 create index idx_likes_post on public.likes(post_id);
 create index idx_templates_category on public.templates(category);
 create index idx_chat_messages_user on public.chat_messages(user_id);
+
+-- Billing indexes
+create index idx_subscriptions_user on public.subscriptions(user_id);
+create index idx_subscriptions_asaas on public.subscriptions(asaas_subscription_id);
+create index idx_subscriptions_status on public.subscriptions(status);
+create index idx_payments_user on public.payments(user_id);
+create index idx_payments_subscription on public.payments(subscription_id);
+create index idx_payments_asaas on public.payments(asaas_payment_id);
+create index idx_webhook_events_asaas on public.webhook_events(asaas_event_id);
 
 -- ============================================
 -- RLS (Row Level Security)
@@ -158,6 +219,23 @@ create policy "Anyone can view templates"
 create policy "Users can insert own templates"
   on public.templates for insert
   with check (auth.uid() = user_id);
+
+-- Subscriptions (users can only view own; writes via service role)
+alter table public.subscriptions enable row level security;
+
+create policy "Users can view own subscriptions"
+  on public.subscriptions for select
+  using (auth.uid() = user_id);
+
+-- Payments (users can only view own; writes via service role)
+alter table public.payments enable row level security;
+
+create policy "Users can view own payments"
+  on public.payments for select
+  using (auth.uid() = user_id);
+
+-- Webhook Events (no user access; service role only)
+alter table public.webhook_events enable row level security;
 
 -- Chat Messages
 alter table public.chat_messages enable row level security;
