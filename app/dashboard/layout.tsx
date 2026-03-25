@@ -104,9 +104,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
+      {/* Background effects */}
+      <div className="fixed inset-0 bg-grid pointer-events-none z-0 opacity-60" />
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="animate-orb absolute top-1/4 left-1/3 w-[420px] h-[420px] rounded-full bg-accent-green/[0.02] blur-[100px]" />
+        <div className="animate-orb-delayed absolute bottom-1/4 right-1/4 w-[350px] h-[350px] rounded-full bg-accent-teal/[0.015] blur-[90px]" />
+      </div>
+      <div className="fixed inset-0 pointer-events-none z-0" style={{ background: "radial-gradient(ellipse at center, transparent 30%, #0C1A14 80%)" }} />
+
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-bg-card border-r border-border flex flex-col transform transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="h-16 flex items-center px-6 border-b border-border">
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 border-r border-[rgba(3,255,148,0.08)] flex flex-col transform transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`} style={{ background: "linear-gradient(180deg, rgba(12,26,20,0.97) 0%, rgba(10,21,16,0.99) 100%)", backdropFilter: "blur(24px)" }}>
+        <div className="h-16 flex items-center px-6 border-b border-[rgba(3,255,148,0.06)]">
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-teal to-accent-green flex items-center justify-center">
               <span className="text-bg-deep font-bold text-sm font-[var(--font-heading)]">O</span>
@@ -135,7 +143,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         {/* User info */}
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-[rgba(3,255,148,0.06)]">
           {loading ? (
             <div className="animate-pulse space-y-2">
               <div className="h-9 w-9 rounded-full bg-bg-card-hover" />
@@ -170,7 +178,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-border bg-bg-card/50 backdrop-blur-sm">
+        <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-[rgba(3,255,148,0.06)]" style={{ background: "rgba(12,26,20,0.6)", backdropFilter: "blur(24px)" }}>
           <button className="lg:hidden p-2 rounded-lg hover:bg-bg-card-hover" onClick={() => setSidebarOpen(true)}>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -191,7 +199,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative z-10">{children}</main>
       </div>
     </div>
   );
