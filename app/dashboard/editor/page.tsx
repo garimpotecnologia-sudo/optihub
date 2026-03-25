@@ -82,11 +82,19 @@ const actions: Action[] = [
   },
 ];
 
+const formatos = [
+  { id: "1:1", label: "1:1", desc: "Quadrado", w: 40, h: 40 },
+  { id: "4:5", label: "4:5", desc: "Retrato", w: 36, h: 48 },
+  { id: "9:16", label: "9:16", desc: "Story", w: 28, h: 50 },
+  { id: "16:9", label: "16:9", desc: "Banner", w: 50, h: 28 },
+];
+
 export default function EditorPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [selectedSub, setSelectedSub] = useState<string | null>(null);
+  const [ratio, setRatio] = useState("1:1");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<{ url: string; prompt: string; saved: boolean; saving: boolean }[]>([]);
 
@@ -119,6 +127,7 @@ export default function EditorPage() {
           body: JSON.stringify({
             prompt: currentPrompt,
             referenceImage: base64,
+            ratio,
             tool: "EDITOR",
           }),
         });
@@ -198,10 +207,51 @@ export default function EditorPage() {
         </div>
       )}
 
-      {/* Step 2: Upload image */}
+      {/* Step 2: Choose format */}
       <div>
         <h2 className="text-sm font-[600] text-text-muted mb-3 uppercase tracking-wider flex items-center gap-2">
           <span className="w-6 h-6 rounded-full bg-accent-green/20 text-accent-green text-xs font-bold flex items-center justify-center">2</span>
+          Tamanho da imagem
+        </h2>
+        <div className="flex flex-wrap gap-3">
+          {formatos.map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setRatio(f.id)}
+              className={`btn-press flex flex-col items-center gap-2 p-3 rounded-xl transition-all min-w-[70px] ${
+                ratio === f.id
+                  ? "bg-accent-green/15 border border-accent-green/30"
+                  : "bg-bg-deep border border-border hover:border-border-hover"
+              }`}
+            >
+              <div className="flex items-center justify-center w-12 h-14">
+                <div
+                  className={`rounded-[3px] border transition-all ${
+                    ratio === f.id
+                      ? "border-accent-green bg-accent-green/10"
+                      : "border-text-muted/25 bg-bg-card-hover"
+                  }`}
+                  style={{ width: `${f.w}px`, height: `${f.h}px`, maxWidth: "48px", maxHeight: "52px" }}
+                >
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-[3px] p-1.5">
+                    <div className={`w-full h-[2px] rounded-full ${ratio === f.id ? "bg-accent-green/30" : "bg-text-muted/15"}`} />
+                    <div className={`w-3/4 h-[2px] rounded-full ${ratio === f.id ? "bg-accent-green/20" : "bg-text-muted/10"}`} />
+                  </div>
+                </div>
+              </div>
+              <div className="text-center">
+                <span className={`block text-[11px] font-bold ${ratio === f.id ? "text-accent-green" : "text-text-secondary"}`}>{f.label}</span>
+                <span className={`block text-[9px] ${ratio === f.id ? "text-accent-green/60" : "text-text-muted/60"}`}>{f.desc}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Step 3: Upload image */}
+      <div>
+        <h2 className="text-sm font-[600] text-text-muted mb-3 uppercase tracking-wider flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-accent-green/20 text-accent-green text-xs font-bold flex items-center justify-center">3</span>
           Suba a foto do produto
         </h2>
         <div className="rounded-2xl card-base p-6">
@@ -251,11 +301,11 @@ export default function EditorPage() {
         </div>
       </div>
 
-      {/* Step 3: Prompt preview + Process */}
+      {/* Step 4: Prompt preview + Process */}
       {selectedAction && previews.length > 0 && (
         <div>
           <h2 className="text-sm font-[600] text-text-muted mb-3 uppercase tracking-wider flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-accent-green/20 text-accent-green text-xs font-bold flex items-center justify-center">3</span>
+            <span className="w-6 h-6 rounded-full bg-accent-green/20 text-accent-green text-xs font-bold flex items-center justify-center">4</span>
             Processar
           </h2>
 
