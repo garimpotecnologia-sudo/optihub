@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Image from "next/image";
 
 interface SubOption { label: string; prompt: string; }
-interface Action { id: string; label: string; prompt: string; subOptions?: SubOption[]; }
+interface Action { id: string; label: string; icon: string; prompt: string; subOptions?: SubOption[]; }
 
 const actions: Action[] = [
-  { id: "remove-bg", label: "Remover Fundo", prompt: "Remove the background from this product image, make it transparent/white" },
-  { id: "lighting", label: "Ajustar Iluminação", prompt: "Improve the lighting of this product photo, make it look professionally lit" },
+  { id: "remove-bg", label: "Remover Fundo", icon: "/editor-icons/remove-bg.png", prompt: "Remove the background from this product image, make it transparent/white" },
+  { id: "lighting", label: "Ajustar Iluminação", icon: "/editor-icons/lighting.png", prompt: "Improve the lighting of this product photo, make it look professionally lit" },
   {
-    id: "lifestyle", label: "Cenário Lifestyle", prompt: "Place this eyewear product in a lifestyle scene",
+    id: "lifestyle", label: "Cenário Lifestyle", icon: "/editor-icons/lifestyle.png", prompt: "Place this eyewear product in a lifestyle scene",
     subOptions: [
       { label: "Mesa de café", prompt: "Place this eyewear on a wooden coffee table next to an open book and a cup of coffee, warm natural light, cozy lifestyle scene" },
       { label: "Beira da piscina", prompt: "Place this eyewear by a swimming pool edge on a white towel, summer vibes, bright sunny day, luxury resort feel" },
@@ -19,7 +20,7 @@ const actions: Action[] = [
     ],
   },
   {
-    id: "vitrine", label: "Cenário Vitrine", prompt: "Place this eyewear product in a premium store display",
+    id: "vitrine", label: "Cenário Vitrine", icon: "/editor-icons/vitrine.png", prompt: "Place this eyewear product in a premium store display",
     subOptions: [
       { label: "Vitrine premium", prompt: "Place this eyewear in a premium glass display case with LED spotlights, dark background, luxury store aesthetic" },
       { label: "Expositor de madeira", prompt: "Place this eyewear on a wooden display stand in a boutique store, warm ambient lighting, artisan feel" },
@@ -29,7 +30,7 @@ const actions: Action[] = [
     ],
   },
   {
-    id: "studio", label: "Cenário Estúdio", prompt: "Place this eyewear product on a clean studio background",
+    id: "studio", label: "Cenário Estúdio", icon: "/editor-icons/studio.png", prompt: "Place this eyewear product on a clean studio background",
     subOptions: [
       { label: "Fundo branco infinito", prompt: "Place this eyewear on a pure white infinite background, clean studio shot with soft shadow, product photography" },
       { label: "Gradiente cinza", prompt: "Place this eyewear floating on a smooth gray gradient background, professional studio lighting from above" },
@@ -39,7 +40,7 @@ const actions: Action[] = [
     ],
   },
   {
-    id: "variations", label: "Variações", prompt: "Generate creative variations of this eyewear product photo",
+    id: "variations", label: "Variações", icon: "/editor-icons/variations.png", prompt: "Generate creative variations of this eyewear product photo",
     subOptions: [
       { label: "Variação de cores", prompt: "Generate color variations of this eyewear, show the same frame in different colors (black, tortoise, clear, blue)" },
       { label: "Ângulos diferentes", prompt: "Show this eyewear from different angles: front view, 3/4 view, side profile, and folded" },
@@ -51,10 +52,10 @@ const actions: Action[] = [
 ];
 
 const formatos = [
-  { id: "1:1", label: "1:1", w: 24, h: 24 },
-  { id: "4:5", label: "4:5", w: 20, h: 26 },
-  { id: "9:16", label: "9:16", w: 16, h: 28 },
-  { id: "16:9", label: "16:9", w: 28, h: 16 },
+  { id: "post-feed", label: "Post Feed", desc: "Instagram / Facebook", ratio: "1:1", w: 40, h: 40 },
+  { id: "post-retrato", label: "Post Retrato", desc: "Melhor engajamento", ratio: "4:5", w: 36, h: 48 },
+  { id: "story", label: "Story / Reels", desc: "Instagram / TikTok", ratio: "9:16", w: 28, h: 50 },
+  { id: "banner", label: "Banner", desc: "Site / Facebook Cover", ratio: "16:9", w: 50, h: 28 },
 ];
 
 export default function EditorPage() {
@@ -62,7 +63,7 @@ export default function EditorPage() {
   const [previews, setPreviews] = useState<string[]>([]);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [selectedSub, setSelectedSub] = useState<string | null>(null);
-  const [ratio, setRatio] = useState("1:1");
+  const [formato, setFormato] = useState(formatos[0]);
   const [editedPrompt, setEditedPrompt] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -92,7 +93,7 @@ export default function EditorPage() {
         const res = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: currentPrompt, referenceImage: reader.result as string, ratio, tool: "EDITOR" }),
+          body: JSON.stringify({ prompt: currentPrompt, referenceImage: reader.result as string, ratio: formato.ratio, tool: "EDITOR" }),
         });
         const data = await res.json();
         if (data.error) alert(`Erro: ${data.error}`);
@@ -107,20 +108,18 @@ export default function EditorPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-[700] font-[var(--font-heading)] tracking-tight">Editor de Produtos</h1>
         <p className="text-text-secondary text-sm mt-1">Edite fotos dos seus produtos com IA.</p>
       </div>
 
-      {/* Main card — all controls in one panel */}
+      {/* Main panel */}
       <div className="rounded-2xl card-base p-5 space-y-5">
 
-        {/* Row 1: Upload + Preview side by side */}
+        {/* Upload area */}
         <div className="flex gap-4 items-start">
-          {/* Upload zone */}
           <div
-            className="shrink-0 w-28 h-28 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center hover:border-accent-green/30 transition-colors cursor-pointer"
+            className="shrink-0 w-28 h-28 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center hover:border-accent-green/30 transition-colors cursor-pointer overflow-hidden"
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => { e.preventDefault(); handleFiles(e.dataTransfer.files); }}
             onClick={() => {
@@ -131,7 +130,7 @@ export default function EditorPage() {
             }}
           >
             {previews.length > 0 ? (
-              <div className="relative w-full h-full rounded-lg overflow-hidden">
+              <div className="relative w-full h-full">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={previews[0]} alt="Produto" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-bg-deep/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
@@ -143,64 +142,58 @@ export default function EditorPage() {
                 <svg className="w-5 h-5 text-text-muted/40 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                 </svg>
-                <span className="text-[10px] text-text-muted">Upload</span>
+                <span className="text-[10px] text-text-muted">Upload foto</span>
               </>
             )}
           </div>
 
-          {/* Right side: action pills + format */}
-          <div className="flex-1 space-y-3">
-            {/* Actions as compact pills */}
-            <div>
-              <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold block mb-1.5">Ação</span>
-              <div className="flex flex-wrap gap-1.5">
-                {actions.map((a) => (
-                  <button
-                    key={a.id}
-                    onClick={() => { setSelectedAction(a.id); setSelectedSub(null); setEditedPrompt(""); setIsEditing(false); }}
-                    className={`btn-press px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
-                      selectedAction === a.id
-                        ? "bg-accent-green/20 text-accent-green border border-accent-green/30"
-                        : "bg-bg-deep border border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
-                    }`}
-                  >
-                    {a.label}
-                  </button>
+          <div className="flex-1 space-y-1">
+            <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold">Foto do produto</span>
+            <p className="text-[11px] text-text-muted/70">Arraste ou clique para subir a foto do produto. PNG, JPG, WebP.</p>
+            {previews.length > 1 && (
+              <div className="flex gap-1.5 mt-2">
+                {previews.slice(1).map((src, i) => (
+                  <div key={i} className="relative w-10 h-10 rounded-lg overflow-hidden border border-border">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt="" className="w-full h-full object-cover" />
+                    <button onClick={() => { setFiles(p => p.filter((_, idx) => idx !== i + 1)); setPreviews(p => p.filter((_, idx) => idx !== i + 1)); }} className="absolute inset-0 bg-bg-deep/50 flex items-center justify-center opacity-0 hover:opacity-100 text-[8px] text-accent-rose">✕</button>
+                  </div>
                 ))}
               </div>
-            </div>
-
-            {/* Format inline */}
-            <div>
-              <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold block mb-1.5">Tamanho</span>
-              <div className="flex gap-2">
-                {formatos.map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => setRatio(f.id)}
-                    className={`btn-press flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
-                      ratio === f.id
-                        ? "bg-accent-green/15 text-accent-green border border-accent-green/30"
-                        : "bg-bg-deep border border-border text-text-muted hover:border-border-hover"
-                    }`}
-                  >
-                    <div
-                      className={`rounded-[2px] border ${ratio === f.id ? "border-accent-green/50 bg-accent-green/15" : "border-text-muted/20 bg-bg-card-hover"}`}
-                      style={{ width: `${f.w}px`, height: `${f.h}px` }}
-                    />
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Sub-options (collapsed row) */}
+        {/* Actions as image cards */}
+        <div>
+          <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold block mb-2">O que deseja fazer?</span>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {actions.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => { setSelectedAction(a.id); setSelectedSub(null); setEditedPrompt(""); setIsEditing(false); }}
+                className={`btn-press flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all ${
+                  selectedAction === a.id
+                    ? "bg-accent-green/10 border border-accent-green/30 shadow-[0_0_15px_rgba(3,255,148,0.05)]"
+                    : "border border-border bg-bg-deep hover:bg-bg-card-hover hover:border-border-hover"
+                }`}
+              >
+                <div className="w-12 h-12 rounded-lg overflow-hidden">
+                  <Image src={a.icon} alt={a.label} width={48} height={48} className="w-full h-full object-cover" />
+                </div>
+                <span className={`text-[10px] font-medium text-center leading-tight ${selectedAction === a.id ? "text-accent-green" : "text-text-secondary"}`}>
+                  {a.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Sub-options */}
         {currentAction?.subOptions && (
           <div>
-            <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold block mb-1.5">
-              {currentAction.label} — escolha
+            <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold block mb-2">
+              {currentAction.label}
             </span>
             <div className="flex flex-wrap gap-1.5">
               {currentAction.subOptions.map((sub) => (
@@ -220,6 +213,42 @@ export default function EditorPage() {
           </div>
         )}
 
+        {/* Formato — igual ao Criador de Artes */}
+        <div>
+          <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold block mb-2">Formato</span>
+          <div className="grid grid-cols-4 gap-2">
+            {formatos.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFormato(f)}
+                className={`btn-press flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all ${
+                  formato.id === f.id
+                    ? "bg-accent-green/15 border border-accent-green/30"
+                    : "bg-bg-deep border border-border hover:border-border-hover"
+                }`}
+              >
+                <div className="flex items-center justify-center w-full h-12">
+                  <div
+                    className={`rounded-[3px] border transition-all ${
+                      formato.id === f.id ? "border-accent-green bg-accent-green/10" : "border-text-muted/25 bg-bg-card-hover"
+                    }`}
+                    style={{ width: `${f.w}px`, height: `${f.h}px`, maxWidth: "48px", maxHeight: "48px" }}
+                  >
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-[2px] p-1">
+                      <div className={`w-full h-[2px] rounded-full ${formato.id === f.id ? "bg-accent-green/30" : "bg-text-muted/15"}`} />
+                      <div className={`w-3/4 h-[2px] rounded-full ${formato.id === f.id ? "bg-accent-green/20" : "bg-text-muted/10"}`} />
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <span className={`block text-[10px] font-bold leading-tight ${formato.id === f.id ? "text-accent-green" : "text-text-secondary"}`}>{f.label}</span>
+                  <span className={`block text-[8px] mt-0.5 ${formato.id === f.id ? "text-accent-green/60" : "text-text-muted/50"}`}>{f.ratio} · {f.desc}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Prompt preview / edit */}
         {selectedAction && (
           <div className="p-3 rounded-xl bg-bg-elevated/50 border border-border">
@@ -227,9 +256,7 @@ export default function EditorPage() {
               <span className="text-[10px] text-text-muted uppercase tracking-wider">Prompt</span>
               <button
                 onClick={() => { if (!isEditing) setEditedPrompt(currentPrompt || basePrompt); setIsEditing(!isEditing); }}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
-                  isEditing ? "bg-accent-amber/20 text-accent-amber" : "text-text-muted hover:text-accent-amber"
-                }`}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all ${isEditing ? "bg-accent-amber/20 text-accent-amber" : "text-text-muted hover:text-accent-amber"}`}
               >
                 <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
@@ -238,12 +265,7 @@ export default function EditorPage() {
               </button>
             </div>
             {isEditing ? (
-              <textarea
-                value={editedPrompt}
-                onChange={(e) => setEditedPrompt(e.target.value)}
-                rows={2}
-                className="input-glow w-full px-2.5 py-2 rounded-lg bg-bg-deep border border-border text-text-primary text-[11px] font-mono leading-relaxed focus:outline-none transition-all resize-none"
-              />
+              <textarea value={editedPrompt} onChange={(e) => setEditedPrompt(e.target.value)} rows={2} className="input-glow w-full px-2.5 py-2 rounded-lg bg-bg-deep border border-border text-text-primary text-[11px] font-mono leading-relaxed focus:outline-none transition-all resize-none" />
             ) : (
               <p className="text-[11px] text-text-secondary font-mono leading-relaxed">{currentPrompt || "Selecione uma ação..."}</p>
             )}
