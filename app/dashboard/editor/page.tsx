@@ -95,6 +95,8 @@ export default function EditorPage() {
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [selectedSub, setSelectedSub] = useState<string | null>(null);
   const [ratio, setRatio] = useState("1:1");
+  const [editedPrompt, setEditedPrompt] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<{ url: string; prompt: string; saved: boolean; saving: boolean }[]>([]);
 
@@ -110,7 +112,8 @@ export default function EditorPage() {
   }, []);
 
   const currentAction = actions.find((a) => a.id === selectedAction);
-  const currentPrompt = selectedSub || currentAction?.prompt || "";
+  const basePrompt = selectedSub || currentAction?.prompt || "";
+  const currentPrompt = isEditing ? editedPrompt : (editedPrompt || basePrompt);
 
   const handleProcess = async () => {
     if (!files.length || !currentPrompt) return;
@@ -169,6 +172,8 @@ export default function EditorPage() {
               onClick={() => {
                 setSelectedAction(action.id);
                 setSelectedSub(null);
+                setEditedPrompt("");
+                setIsEditing(false);
               }}
               className={`btn-press p-4 rounded-xl border text-left transition-all ${
                 selectedAction === action.id
@@ -193,7 +198,7 @@ export default function EditorPage() {
             {currentAction.subOptions.map((sub) => (
               <button
                 key={sub.label}
-                onClick={() => setSelectedSub(sub.prompt)}
+                onClick={() => { setSelectedSub(sub.prompt); setEditedPrompt(""); setIsEditing(false); }}
                 className={`btn-press p-3 rounded-lg border text-left transition-all text-xs ${
                   selectedSub === sub.prompt
                     ? "border-accent-green/40 bg-accent-green/5 text-accent-green"
@@ -309,10 +314,39 @@ export default function EditorPage() {
             Processar
           </h2>
 
-          {/* Show prompt that will be sent */}
+          {/* Editable prompt */}
           <div className="p-3 rounded-xl bg-bg-elevated border border-border mb-4">
-            <span className="text-[10px] text-text-muted uppercase tracking-wider block mb-1">Prompt que será enviado:</span>
-            <p className="text-xs text-text-secondary font-mono leading-relaxed">{currentPrompt}</p>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] text-text-muted uppercase tracking-wider">Prompt que será enviado:</span>
+              <button
+                onClick={() => {
+                  if (!isEditing) {
+                    setEditedPrompt(currentPrompt || basePrompt);
+                  }
+                  setIsEditing(!isEditing);
+                }}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium transition-all ${
+                  isEditing
+                    ? "bg-accent-amber/20 text-accent-amber border border-accent-amber/30"
+                    : "text-text-muted hover:text-accent-amber"
+                }`}
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                </svg>
+                {isEditing ? "Salvar" : "Editar"}
+              </button>
+            </div>
+            {isEditing ? (
+              <textarea
+                value={editedPrompt}
+                onChange={(e) => setEditedPrompt(e.target.value)}
+                rows={3}
+                className="input-glow w-full px-3 py-2 rounded-lg bg-bg-deep border border-border text-text-primary text-xs font-mono leading-relaxed focus:outline-none transition-all resize-none"
+              />
+            ) : (
+              <p className="text-xs text-text-secondary font-mono leading-relaxed">{currentPrompt}</p>
+            )}
           </div>
 
           <button
