@@ -7,46 +7,56 @@ interface SubOption { label: string; prompt: string; }
 interface Action { id: string; label: string; icon: string; prompt: string; subOptions?: SubOption[]; }
 
 const actions: Action[] = [
-  { id: "remove-bg", label: "Remover Fundo", icon: "/editor-icons/remove-bg.png", prompt: "Remove the background from this product image, make it transparent/white" },
-  { id: "lighting", label: "Ajustar Iluminação", icon: "/editor-icons/lighting.png", prompt: "Improve the lighting of this product photo, make it look professionally lit" },
   {
-    id: "lifestyle", label: "Cenário Lifestyle", icon: "/editor-icons/lifestyle.png", prompt: "Place this eyewear product in a lifestyle scene",
+    id: "remove-bg", label: "Remover Fundo", icon: "/editor-icons/remove-bg.png",
+    prompt: "Remove the background completely from this eyewear product photo. Keep the product perfectly isolated with clean, crisp edges. Output on a pure white background with a subtle natural drop shadow beneath the frame for depth. Maintain every detail of the product: textures, reflections, lens clarity, and brand markings. Professional e-commerce quality, 8K resolution feel.",
+  },
+  {
+    id: "lighting", label: "Ajustar Iluminação", icon: "/editor-icons/lighting.png",
+    prompt: "Enhance the lighting of this eyewear product photo to professional studio quality. Apply a three-point lighting setup: strong key light from the upper left creating clean highlights on the frame, soft fill light from the right to eliminate harsh shadows, and a subtle rim light from behind to separate the product from the background. Make the lenses look crystal clear with natural reflections. Ensure the frame material texture is visible — glossy surfaces should shine, matte surfaces should look velvety. Color-accurate, high-end product photography standard.",
+  },
+  {
+    id: "lifestyle", label: "Cenário Lifestyle", icon: "/editor-icons/lifestyle.png",
+    prompt: "Place this eyewear in an aspirational lifestyle setting, cinematic color grading, shallow depth of field, natural golden hour lighting",
     subOptions: [
-      { label: "Mesa de café", prompt: "Place this eyewear on a wooden coffee table next to an open book and a cup of coffee, warm natural light, cozy lifestyle scene" },
-      { label: "Beira da piscina", prompt: "Place this eyewear by a swimming pool edge on a white towel, summer vibes, bright sunny day, luxury resort feel" },
-      { label: "Escritório moderno", prompt: "Place this eyewear on a modern minimalist desk with a laptop and plant, clean professional workspace" },
-      { label: "Bancada de mármore", prompt: "Place this eyewear on a white marble countertop with a perfume bottle nearby, luxury lifestyle, soft lighting" },
-      { label: "Piquenique ao ar livre", prompt: "Place this eyewear on a picnic blanket in a green park, natural sunlight, relaxed outdoor lifestyle" },
+      { label: "Mesa de café", prompt: "Place this exact eyewear casually on a rich walnut coffee table beside a ceramic latte cup and an open hardcover book. Morning golden light streaming through a nearby window, creating warm highlights on the frame. Shallow depth of field with a cozy bokeh background of a modern apartment. The eyewear is the hero — sharp focus, every detail visible. Lifestyle editorial photography, warm tones, inviting mood." },
+      { label: "Beira da piscina", prompt: "Place this exact eyewear on the edge of an infinity pool overlooking the ocean. Crystal-clear turquoise water, white marble pool edge, a folded luxury towel nearby. Bright golden hour sunlight reflecting off the lenses with beautiful lens flare. Summer resort luxury atmosphere, vibrant yet sophisticated color palette. Shot with a wide aperture for creamy bokeh in the background. High-end travel magazine aesthetic." },
+      { label: "Escritório moderno", prompt: "Place this exact eyewear on a sleek Scandinavian-style desk next to a MacBook and a small potted monstera plant. Clean, bright workspace with floor-to-ceiling windows showing a city skyline. Soft diffused natural light creating gentle shadows. The frame sits on a leather desk pad. Modern professional lifestyle, clean composition, aspirational work-from-home setup. Architectural Digest meets product photography." },
+      { label: "Bancada de mármore", prompt: "Place this exact eyewear on a Calacatta gold marble countertop beside an elegant perfume bottle and a small gold tray. Soft, luxurious ambient lighting from above with warm undertones. The marble veins create natural leading lines toward the product. Premium beauty-meets-fashion editorial style. Rich textures, sophisticated color palette of whites, golds, and warm neutrals. Vogue-level product styling." },
+      { label: "Piquenique ao ar livre", prompt: "Place this exact eyewear on a cream linen picnic blanket in a sun-dappled park. Surrounded by fresh fruits, a straw hat, and wildflowers. Soft, dreamy golden hour backlight filtering through tree leaves creating beautiful bokeh circles. Natural, organic color palette with warm greens and golden tones. Relaxed, free-spirited lifestyle mood. Fashion brand campaign aesthetic, Canon 85mm f/1.4 shallow depth of field look." },
     ],
   },
   {
-    id: "vitrine", label: "Cenário Vitrine", icon: "/editor-icons/vitrine.png", prompt: "Place this eyewear product in a premium store display",
+    id: "vitrine", label: "Cenário Vitrine", icon: "/editor-icons/vitrine.png",
+    prompt: "Place this eyewear in a premium optical store display with dramatic lighting and luxurious materials",
     subOptions: [
-      { label: "Vitrine premium", prompt: "Place this eyewear in a premium glass display case with LED spotlights, dark background, luxury store aesthetic" },
-      { label: "Expositor de madeira", prompt: "Place this eyewear on a wooden display stand in a boutique store, warm ambient lighting, artisan feel" },
-      { label: "Prateleira minimalista", prompt: "Place this eyewear on a floating white shelf against a clean wall, minimalist modern optical store" },
-      { label: "Display com espelho", prompt: "Place this eyewear on a mirrored display surface, showing the reflection, upscale store environment" },
-      { label: "Balcão de atendimento", prompt: "Place this eyewear on a sleek store counter with soft backlighting, ready for customer viewing" },
+      { label: "Vitrine premium", prompt: "Place this exact eyewear inside a premium glass display case with precision LED spotlighting from above. Deep black velvet background, the frame illuminated with focused accent lights that create a halo glow around the product. Subtle neon accent light in purple or teal reflecting off the glass. Ultra-luxury jewelry store aesthetic — think Cartier or Tom Ford boutique. Dramatic contrast, the eyewear gleams like a precious object. Moody, sophisticated, high-end retail photography." },
+      { label: "Expositor de madeira", prompt: "Place this exact eyewear on an artisan walnut wood display stand with visible grain texture. Warm amber accent lighting from the sides, creating rich shadows and highlights on the frame. Background of a boutique optical store with blurred shelves of frames. Handcrafted, premium feel — like a curated independent eyewear gallery. Warm color temperature, cozy yet luxurious. The wood grain and frame details are both in sharp focus." },
+      { label: "Prateleira minimalista", prompt: "Place this exact eyewear on a floating white lacquer shelf against a clean matte white wall. Single dramatic spotlight from above casting a precise shadow below. Minimal, Zen-like composition with generous negative space. Ultra-modern optical boutique aesthetic — Apple Store meets luxury eyewear. Clean lines, perfect symmetry, the product is the absolute focal point. High-key lighting, crisp and architectural." },
+      { label: "Display com espelho", prompt: "Place this exact eyewear on a polished mirrored surface that creates a perfect reflection beneath it. Dark, moody background with focused top-down lighting. The mirror reflection adds depth and doubles the visual impact of the product. Subtle colored accent lighting (deep purple or emerald) visible in the mirror reflection. High-end product photography style used by luxury brands like Dior or Prada. Dramatic, sleek, and modern." },
+      { label: "Balcão de atendimento", prompt: "Place this exact eyewear on a sleek matte black store counter with soft LED backlighting creating a glowing edge. A small velvet presentation tray holds the frame. Blurred background shows a modern optical store interior with warm ambient lighting. The counter has a subtle branded feel — sophisticated, welcoming, professional. The eyewear is positioned at a slight angle, as if presented to a customer. Retail photography, inviting and premium." },
     ],
   },
   {
-    id: "studio", label: "Cenário Estúdio", icon: "/editor-icons/studio.png", prompt: "Place this eyewear product on a clean studio background",
+    id: "studio", label: "Cenário Estúdio", icon: "/editor-icons/studio.png",
+    prompt: "Professional studio product photography of this eyewear with controlled lighting and clean backgrounds",
     subOptions: [
-      { label: "Fundo branco infinito", prompt: "Place this eyewear on a pure white infinite background, clean studio shot with soft shadow, product photography" },
-      { label: "Gradiente cinza", prompt: "Place this eyewear floating on a smooth gray gradient background, professional studio lighting from above" },
-      { label: "Fundo colorido", prompt: "Place this eyewear on a bold vibrant colored background, pop art style studio shot, high contrast" },
-      { label: "Superfície refletiva", prompt: "Place this eyewear on a black reflective surface, dramatic studio lighting, high-end product photography" },
-      { label: "Sombra artística", prompt: "Place this eyewear on a beige surface with dramatic side lighting creating artistic shadows, editorial style" },
+      { label: "Fundo branco infinito", prompt: "Place this exact eyewear on a pure white seamless cyclorama background. Professional three-point studio lighting: key light creating a clean specular highlight on the frame, fill light softening shadows, and backlight for edge separation. Subtle natural drop shadow on the white surface for grounding. The product floats in clean white space. E-commerce hero image quality — every detail razor-sharp, true-to-life colors. Shot on a medium format camera at f/11 for maximum sharpness." },
+      { label: "Gradiente cinza", prompt: "Place this exact eyewear floating against a smooth charcoal-to-light-gray gradient background. Dramatic overhead studio lighting with a large softbox creating even, professional illumination. The gradient adds depth without distraction. Subtle catchlight reflections in the lenses. Premium catalog photography style — clean, authoritative, and elegant. Center-frame composition with perfect symmetry." },
+      { label: "Fundo colorido", prompt: "Place this exact eyewear against a bold, vibrant solid color background (electric blue, hot pink, or vivid orange — choose the color that creates the strongest contrast with the frame). Hard studio lighting creating graphic, high-contrast shadows. Pop art meets high fashion editorial style. The frame pops dramatically against the saturated background. Bold, eye-catching, Instagram-ready. Think Warby Parker campaign meets Andy Warhol — fun, modern, and impossible to scroll past." },
+      { label: "Superfície refletiva", prompt: "Place this exact eyewear on a glossy black acrylic surface that creates a mirror-like reflection below. Studio lighting with dramatic side lights creating bright edge highlights on the frame contours. Deep black background fading to pure darkness. The reflection on the surface is slightly diffused, adding sophistication. Luxury automotive-style product photography — think how Rolex or Ray-Ban shoots their hero products. Moody, powerful, premium. Neon accent light (purple or orange) subtly rimming the edges." },
+      { label: "Sombra artística", prompt: "Place this exact eyewear on a warm sand-colored or cream surface with dramatic hard side lighting from the left creating long, artistic geometric shadows of the frame. Late afternoon sun simulation — warm, golden light with high contrast. The shadow pattern becomes part of the composition, creating visual interest. Editorial fashion photography style — Vogue Eyewear campaign aesthetic. Artistic, evocative, storytelling through light and shadow. The interplay between the product and its shadow is the hero of this shot." },
     ],
   },
   {
-    id: "variations", label: "Variações", icon: "/editor-icons/variations.png", prompt: "Generate creative variations of this eyewear product photo",
+    id: "variations", label: "Variações", icon: "/editor-icons/variations.png",
+    prompt: "Generate creative product variations of this eyewear maintaining the exact frame design",
     subOptions: [
-      { label: "Variação de cores", prompt: "Generate color variations of this eyewear, show the same frame in different colors (black, tortoise, clear, blue)" },
-      { label: "Ângulos diferentes", prompt: "Show this eyewear from different angles: front view, 3/4 view, side profile, and folded" },
-      { label: "Diferentes lentes", prompt: "Show this eyewear frame with different lens options: clear, gradient, mirror, polarized" },
-      { label: "Flat lay", prompt: "Create a flat lay composition of this eyewear with accessories: case, cleaning cloth, and box" },
-      { label: "Composição artística", prompt: "Create an artistic editorial composition of this eyewear with dramatic lighting and creative positioning" },
+      { label: "Variação de cores", prompt: "Generate 4 color variations of this exact eyewear frame displayed side by side on a clean white background. Show the same frame design in: classic glossy black, warm tortoiseshell/havana, crystal clear transparent, and deep navy blue. Each frame should be at the same angle and size for easy comparison. Professional catalog layout with consistent lighting across all variations. Clean, organized, e-commerce ready — perfect for a product page color selector." },
+      { label: "Ângulos diferentes", prompt: "Show this exact eyewear from 4 different professional angles arranged in a clean grid layout: front-facing view (straight on), three-quarter angle from the left showing depth, side profile view showing the temple arm design, and a top-down view of the folded frame. Consistent white background and studio lighting across all angles. Each angle reveals different design details of the frame. Product photography standard used by premium eyewear e-commerce sites." },
+      { label: "Diferentes lentes", prompt: "Show this exact eyewear frame with 4 different lens options displayed in a clean comparison layout: crystal clear prescription-ready lenses, gradient smoke-to-clear lenses, blue mirror reflective lenses, and classic green G-15 lenses. Same frame, same angle, same lighting — only the lenses change. Each variant labeled-ready with distinct lens characteristics clearly visible. Professional optical product catalog style." },
+      { label: "Flat lay", prompt: "Create a premium flat lay composition shot from directly above. This exact eyewear centered as the hero, surrounded by matching accessories: a structured hard case, a microfiber cleaning cloth with subtle branding, a branded box or sleeve, and a small lens cleaning spray. All items arranged with geometric precision on a clean marble or linen surface. Styled with negative space between items. Premium unboxing experience aesthetic — Apple-level product presentation. Soft, even overhead lighting with no harsh shadows." },
+      { label: "Composição artística", prompt: "Create a dramatic artistic editorial composition of this exact eyewear. Position the frame at a dynamic angle on a dark surface with neon-colored accent lighting — vibrant purple and electric orange glowing edges reminiscent of LED wire glasses. Dramatic rim lighting highlighting the frame silhouette. Moody, cinematic atmosphere with deep shadows and selective illumination. High-fashion editorial meets cyberpunk aesthetic. The kind of hero shot that stops you mid-scroll — bold, artistic, and unforgettable. Deep blacks, vivid neon accents, razor-sharp product detail." },
     ],
   },
 ];
@@ -172,18 +182,19 @@ export default function EditorPage() {
               <button
                 key={a.id}
                 onClick={() => { setSelectedAction(a.id); setSelectedSub(null); setEditedPrompt(""); setIsEditing(false); }}
-                className={`btn-press relative rounded-xl overflow-hidden transition-all aspect-square ${
+                className={`btn-press flex flex-col rounded-xl overflow-hidden transition-all ${
                   selectedAction === a.id
                     ? "ring-2 ring-accent-green ring-offset-2 ring-offset-bg-card shadow-[0_0_20px_rgba(3,255,148,0.12)]"
                     : "ring-1 ring-border hover:ring-border-hover"
                 }`}
               >
-                <Image src={a.icon} alt={a.label} width={200} height={200} className="w-full h-full object-cover" />
-                {/* Label overlay at bottom */}
-                <div className={`absolute inset-x-0 bottom-0 py-1.5 px-1 text-center transition-all ${
+                <div className="aspect-square w-full">
+                  <Image src={a.icon} alt={a.label} width={200} height={200} className="w-full h-full object-cover" />
+                </div>
+                <div className={`py-1.5 px-1 text-center transition-all w-full ${
                   selectedAction === a.id
                     ? "bg-accent-green/90"
-                    : "bg-bg-deep/80 backdrop-blur-sm"
+                    : "bg-bg-deep/80"
                 }`}>
                   <span className={`text-[9px] font-bold leading-none ${selectedAction === a.id ? "text-bg-deep" : "text-text-secondary"}`}>
                     {a.label}
