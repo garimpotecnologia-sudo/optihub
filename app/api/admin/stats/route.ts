@@ -17,18 +17,10 @@ export async function GET() {
     const { count: totalUsers } = await admin.from("profiles").select("*", { count: "exact", head: true });
 
     // Users by plan
-    const { data: planCounts } = await admin.rpc("get_plan_counts").catch(() => ({ data: null }));
-
-    // If RPC doesn't exist, count manually
-    let byPlan = { STARTER: 0, PRO: 0, REDE: 0 };
-    if (planCounts) {
-      for (const row of planCounts) byPlan[row.plan as keyof typeof byPlan] = row.count;
-    } else {
-      const { count: starter } = await admin.from("profiles").select("*", { count: "exact", head: true }).eq("plan", "STARTER");
-      const { count: pro } = await admin.from("profiles").select("*", { count: "exact", head: true }).eq("plan", "PRO");
-      const { count: rede } = await admin.from("profiles").select("*", { count: "exact", head: true }).eq("plan", "REDE");
-      byPlan = { STARTER: starter || 0, PRO: pro || 0, REDE: rede || 0 };
-    }
+    const { count: starter } = await admin.from("profiles").select("*", { count: "exact", head: true }).eq("plan", "STARTER");
+    const { count: pro } = await admin.from("profiles").select("*", { count: "exact", head: true }).eq("plan", "PRO");
+    const { count: rede } = await admin.from("profiles").select("*", { count: "exact", head: true }).eq("plan", "REDE");
+    const byPlan = { STARTER: starter || 0, PRO: pro || 0, REDE: rede || 0 };
 
     // Generations this month
     const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
