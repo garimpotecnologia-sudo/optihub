@@ -164,26 +164,31 @@ export default function EditorPage() {
           </div>
         </div>
 
-        {/* Actions as image cards */}
+        {/* Actions as image buttons */}
         <div>
           <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold block mb-2">O que deseja fazer?</span>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
             {actions.map((a) => (
               <button
                 key={a.id}
                 onClick={() => { setSelectedAction(a.id); setSelectedSub(null); setEditedPrompt(""); setIsEditing(false); }}
-                className={`btn-press flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all ${
+                className={`btn-press relative rounded-xl overflow-hidden transition-all aspect-square ${
                   selectedAction === a.id
-                    ? "bg-accent-green/10 border border-accent-green/30 shadow-[0_0_15px_rgba(3,255,148,0.05)]"
-                    : "border border-border bg-bg-deep hover:bg-bg-card-hover hover:border-border-hover"
+                    ? "ring-2 ring-accent-green ring-offset-2 ring-offset-bg-card shadow-[0_0_20px_rgba(3,255,148,0.12)]"
+                    : "ring-1 ring-border hover:ring-border-hover"
                 }`}
               >
-                <div className="w-12 h-12 rounded-lg overflow-hidden">
-                  <Image src={a.icon} alt={a.label} width={48} height={48} className="w-full h-full object-cover" />
+                <Image src={a.icon} alt={a.label} width={200} height={200} className="w-full h-full object-cover" />
+                {/* Label overlay at bottom */}
+                <div className={`absolute inset-x-0 bottom-0 py-1.5 px-1 text-center transition-all ${
+                  selectedAction === a.id
+                    ? "bg-accent-green/90"
+                    : "bg-bg-deep/80 backdrop-blur-sm"
+                }`}>
+                  <span className={`text-[9px] font-bold leading-none ${selectedAction === a.id ? "text-bg-deep" : "text-text-secondary"}`}>
+                    {a.label}
+                  </span>
                 </div>
-                <span className={`text-[10px] font-medium text-center leading-tight ${selectedAction === a.id ? "text-accent-green" : "text-text-secondary"}`}>
-                  {a.label}
-                </span>
               </button>
             ))}
           </div>
