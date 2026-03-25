@@ -620,9 +620,9 @@ export default function CriarPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {results.map((item, i) => (
               <div key={i} className="rounded-2xl card-base overflow-hidden">
-                <div className="aspect-square bg-bg-card-hover flex items-center justify-center">
+                <div className="bg-bg-card-hover">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.url} alt={`Geração ${i + 1}`} className="w-full h-full object-cover" />
+                  <img src={item.url} alt={`Geração ${i + 1}`} className="w-full h-auto object-contain" />
                 </div>
                 <div className="p-3 space-y-2">
                   {/* Save to gallery prompt */}
