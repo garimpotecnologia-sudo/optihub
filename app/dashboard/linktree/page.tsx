@@ -189,6 +189,24 @@ export default function LinktreeEditorPage() {
                   {slugAvailable ? "✓ Disponível" : "✕ Já em uso"}
                 </p>
               )}
+              {hasLinktree && slug && (
+                <div className="flex items-center gap-0 mt-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`https://hub.agentproia.com/${slug}`}
+                    className="flex-1 px-3 py-2 rounded-l-lg bg-bg-deep border border-r-0 border-border text-text-primary text-[11px] focus:outline-none cursor-text select-all"
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                  />
+                  <button
+                    type="button"
+                    onClick={copyLink}
+                    className="px-3 py-2 rounded-r-lg bg-accent-green/10 border border-accent-green/20 text-accent-green text-[11px] font-semibold hover:bg-accent-green/20 transition-colors whitespace-nowrap"
+                  >
+                    {copied ? "Copiado!" : "Copiar"}
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
