@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 
-type Tool = "TODOS" | "CRIADOR" | "EDITOR" | "TRYON" | "ASSISTENTE";
+type Tool = "TODOS" | "CRIADOR" | "EDITOR" | "TRYON" | "ASSISTENTE" | "FACEPOST" | "CARROSSEL";
 
 interface GalleryItem {
   id: string;
