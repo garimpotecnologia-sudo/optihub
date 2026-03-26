@@ -80,8 +80,14 @@ Responda EXCLUSIVAMENTE em JSON válido, sem markdown, sem comentários. O forma
 
 Cada imagePrompt deve ser um prompt completo e detalhado para geração de imagem por IA, incluindo: conceito visual, estilo, composição, cores, textura. Focado em ótica/eyewear. SEM texto na imagem.`;
 
-    // Generate 3 variations in parallel via CLIProxy
-    const generateOne = async (): Promise<unknown[] | null> => {
+    // Generate 3 variations with distinct tones in parallel via CLIProxy
+    const tones = [
+      "Use tom PROFISSIONAL e técnico. Linguagem corporativa, dados concretos, credibilidade.",
+      "Use tom DESCONTRAÍDO e próximo. Linguagem informal, emojis, humor leve, como se fosse um amigo.",
+      "Use tom EMOCIONAL e inspirador. Storytelling, apelo sentimental, conexão humana, transformação.",
+    ];
+
+    const generateOne = async (toneInstruction: string): Promise<unknown[] | null> => {
       try {
         const res = await fetch("https://ia.otimusclinic.com.br/v1/chat/completions", {
           method: "POST",
@@ -92,10 +98,10 @@ Cada imagePrompt deve ser um prompt completo e detalhado para geração de image
           body: JSON.stringify({
             model: "claude-sonnet-4-20250514",
             messages: [
-              { role: "system", content: "Você é um especialista em marketing digital e copywriting para óticas." },
+              { role: "system", content: `Você é um especialista em marketing digital e copywriting para óticas. ${toneInstruction}` },
               { role: "user", content: prompt },
             ],
-            temperature: 0.9,
+            temperature: 0.8,
             max_tokens: 4096,
           }),
         });
@@ -110,7 +116,7 @@ Cada imagePrompt deve ser um prompt completo e detalhado para geração de image
       }
     };
 
-    const results = await Promise.all([generateOne(), generateOne(), generateOne()]);
+    const results = await Promise.all(tones.map((tone) => generateOne(tone)));
     const variations = results.filter((r): r is unknown[] => r !== null);
 
     if (variations.length === 0) {
