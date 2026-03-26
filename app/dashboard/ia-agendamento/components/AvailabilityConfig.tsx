@@ -159,7 +159,7 @@ export default function AvailabilityConfig() {
                     <option value={45}>45min</option>
                     <option value={60}>1h</option>
                   </select>
-                </>
+                </div>
               )}
             </div>
           ))}
