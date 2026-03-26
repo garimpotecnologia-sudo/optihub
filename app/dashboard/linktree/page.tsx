@@ -127,7 +127,7 @@ export default function LinktreeEditorPage() {
         slug, title, bio, cover_image: coverImage, logo,
         cover_position: coverPosition, logo_position: logoPosition,
         primary_color: primaryColor, secondary_color: secondaryColor,
-        text_color: textColor, buttons: buttons.filter((b) => b.label && b.url),
+        text_color: textColor, buttons: buttons.filter((b) => b.label && b.url).map((b) => ({ ...b, url: /^https?:\/\//i.test(b.url) ? b.url : `https://${b.url}` })),
         is_published: isPublished,
       }),
     });

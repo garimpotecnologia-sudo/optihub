@@ -1,5 +1,11 @@
 "use client";
 
+function normalizeUrl(url: string) {
+  if (!url) return url;
+  if (/^https?:\/\//i.test(url)) return url;
+  return `https://${url}`;
+}
+
 function parsePos(pos: string | null) {
   const parts = (pos || "50% 50% 1").split(" ").map((p) => parseFloat(p));
   const x = parts[0] ?? 50;
@@ -83,7 +89,7 @@ export default function LinktreeView({ linktree }: { linktree: Linktree }) {
           {(buttons || []).map((btn, i) => (
             <a
               key={i}
-              href={btn.url}
+              href={normalizeUrl(btn.url)}
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full py-3.5 px-6 rounded-xl text-center font-semibold text-sm transition-all hover:scale-[1.02] hover:shadow-lg"
