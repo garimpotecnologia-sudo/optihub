@@ -37,57 +37,9 @@ const promptsProntos = [
   { cat: "Educativo", text: "Crie um infográfico visual e didático explicando a diferença entre lentes monofocal, bifocal e multifocal. CONCEITO: Educação visual clara — três colunas comparativas mostrando cada tipo de lente com ilustração esquemática de como a visão funciona em cada uma. Ícones intuitivos de olho/visão para cada zona focal. ESTILO: Infográfico editorial limpo e moderno, estilo revista de saúde premium — didático sem ser clínico. COMPOSIÇÃO: Título educativo no topo, 3 colunas iguais (Monofocal | Bifocal | Multifocal), cada uma com: ilustração da lente, zonas de visão coloridas, lista de 3-4 benefícios, e indicação 'ideal para'. CORES: Azul confiança para monofocal, verde para bifocal, roxo para multifocal, fundo branco, texto cinza escuro. TEXTURA: Ilustrações com gradientes suaves nas zonas da lente, ícones flat com sombra mínima. EVITAR: Jargão técnico excessivo, fotos de olhos reais, design de apresentação PowerPoint, cores vibrantes demais." },
   { cat: "Educativo", text: "Crie um post educativo sobre como escolher o formato de armação ideal para cada tipo de rosto. CONCEITO: Guia visual prático — 4 formatos de rosto (redondo, quadrado, oval, coração) lado a lado, cada um com a silhueta do rosto e a armação ideal sobreposta. Dicas curtas abaixo de cada combinação. ESTILO: Infográfico fashion editorial, guia de estilo visual — como revista Esquire ou GQ. COMPOSIÇÃO: Título 'Armação Ideal para Seu Rosto' no topo, grid 2x2 com os 4 formatos, cada quadro com silhueta do rosto em cor suave e armação recomendada desenhada sobre ela. Nome do formato de rosto e 1 dica abaixo de cada. CORES: Fundo neutro claro, silhuetas em tons pastel diferenciados (rosa, azul, verde, lavanda), armações em preto ou dourado, texto cinza escuro. TEXTURA: Silhuetas com acabamento matte suave, armações com leve brilho metálico. EVITAR: Fotos reais de rostos, excesso de texto, design cluttered, cores primárias fortes." },
   { cat: "Educativo", text: "Crie um post educativo sobre a importância da proteção UV nos óculos de sol e como identificar lentes de qualidade. CONCEITO: Conscientização premium — ilustração elegante mostrando raios UV sendo bloqueados por uma lente de qualidade versus passando por uma lente genérica. Selo de certificação UV400 em destaque dourado. ESTILO: Infográfico científico-editorial, estilo Nature meets fashion magazine — informativo e sofisticado. COMPOSIÇÃO: Dividido em duas metades — lado esquerdo mostra lente de qualidade bloqueando raios UV (com selo UV400), lado direito mostra lente genérica deixando passar (com ícone de alerta). 3 dicas rápidas para identificar qualidade na parte inferior. CORES: Azul escuro para UV, dourado para proteção/certificação, vermelho sutil para alerta, fundo claro. TEXTURA: Raios UV com efeito de luz translúcida, lentes com acabamento realista. EVITAR: Tom alarmista, imagens de danos nos olhos, excesso de texto científico, design escolar." },
-  // === FACEPOST — Consultor Profissional ===
-  { cat: "FacePost", text: "[FP-Consultor] O Consultor Atencioso: A pessoa da foto de referência de pé em uma ótica bem iluminada e moderna, conversando com um cliente sorridente. Segura um par de óculos com uma mão e com a outra aponta para detalhes na bancada para demonstrar precisão visual. Expressão de profissionalismo e empatia. Iluminação natural de loja, fundo com vitrines de armações desfocadas." },
-  { cat: "FacePost", text: "[FP-Consultor] A Calibração Perfeita: Close-up nas mãos da pessoa da foto de referência, especialista em ótica, usando ferramentas delicadas para ajustar uma armação de óculos. Na bancada de trabalho, instrumentos de precisão óptica organizados. Fundo de laboratório óptico limpo e profissional. Iluminação focada nas mãos e no trabalho." },
-  { cat: "FacePost", text: "[FP-Consultor] O Olhar Científico: A pessoa da foto de referência com expressão concentrada, vestindo jaleco branco. Olha através de um equipamento óptico de alta precisão com iluminação controlada e científica. Ambiente de laboratório moderno e tecnológico ao fundo." },
-  { cat: "FacePost", text: "[FP-Consultor] A Explicação Tecnológica: A pessoa da foto de referência explicando a tecnologia de lentes para um cliente atento. Aponta para um diagrama técnico de uma lente enquanto segura uma armação, ilustrando a escala dos tratamentos anti-reflexo. Estilo de foto corporativa moderna com iluminação profissional." },
-  { cat: "FacePost", text: "[FP-Consultor] A Revisão de Qualidade: A pessoa da foto de referência inspecionando uma lente de óculos sob luz especial de controle de qualidade. Expressão de rigor profissional e atenção aos detalhes. Foco nítido na lente e nas mãos. Ambiente de laboratório óptico com equipamentos modernos ao fundo." },
-  // === FACEPOST — Tecnologia e Modernidade ===
-  { cat: "FacePost", text: "[FP-Tecnologia] A Gravação na Lente: Close-up extremo da mão da pessoa da foto de referência segurando uma lente de óculos transparente. Sob luz especial, padrões microscópicos de tecnologia são visíveis como marca de qualidade. Fundo de equipamentos ópticos modernos e sofisticados." },
-  { cat: "FacePost", text: "[FP-Tecnologia] O Scanner de Alta Tecnologia: A pessoa da foto de referência operando um scanner óptico 3D avançado em ambiente de laboratório high-tech. Telas com dados holográficos ao fundo. Estilo de foto de engenharia de precisão." },
-  { cat: "FacePost", text: "[FP-Tecnologia] O Revestimento Avançado: A pessoa da foto de referência demonstrando o efeito repelente de água de uma lente com nanotecnologia. Uma gota de água escorrega perfeitamente sobre a superfície da lente. Iluminação difusa e limpa, ambiente de apresentação tecnológica." },
-  { cat: "FacePost", text: "[FP-Tecnologia] A Medição de Precisão: A pessoa da foto de referência usando um dispositivo de medição pupilar digital de última geração em um cliente. Tela do dispositivo visível com dados precisos. Foco na tecnologia e no atendimento cuidadoso." },
-  { cat: "FacePost", text: "[FP-Tecnologia] A Inspeção do Material: Close-up na mão da pessoa da foto de referência segurando uma haste de óculos feita de material de alta tecnologia. Comparando a textura e a leveza do material com instrumentos de precisão. Expressão de curiosidade tecnológica e expertise." },
-  // === FACEPOST — Estilo e Design ===
-  { cat: "FacePost", text: "[FP-Estilo] O Curador de Estilo: A pessoa da foto de referência na seção de moda da ótica, segurando uma armação de design exclusivo com elegância. Vitrines com armações premium ao fundo em bokeh suave. Estilo de foto de moda de rua de alta qualidade, iluminação natural." },
-  { cat: "FacePost", text: "[FP-Estilo] A Joia Escondida: Close-up da pessoa da foto de referência focando na mão que segura uma armação de óculos de sol sofisticada. Detalhes da dobradiça e design premium visíveis. Iluminação lateral dramática destacando os acabamentos." },
-  { cat: "FacePost", text: "[FP-Estilo] O Foco no Detalhe: A pessoa da foto de referência olhando diretamente para a câmera, usando óculos de grau modernos e elegantes. Na mão, segura uma armação exclusiva, enfatizando que os menores detalhes fazem a maior diferença. Iluminação de estúdio suave e profissional." },
-  { cat: "FacePost", text: "[FP-Estilo] A Vitrine de Design: A pessoa da foto de referência arrumando uma vitrine de óculos com cuidado artístico. Posiciona armações de design com precisão, criando uma composição visual premium. Reflexos suaves no vidro da vitrine." },
-  { cat: "FacePost", text: "[FP-Estilo] A Armação Exclusiva: A pessoa da foto de referência segurando uma armação de acetato vibrante e moderna, apresentando-a como peça de arte. Expressão de orgulho e inovação. Estilo de foto de moda de vanguarda com iluminação criativa." },
-  // === FACEPOST — Confiança e Acolhimento ===
-  { cat: "FacePost", text: "[FP-Confiança] O Sorriso de Confiança: A pessoa da foto de referência olhando para a câmera com sorriso caloroso e confiante, braços cruzados em postura profissional. Atrás, a ótica bem organizada e acolhedora. Iluminação natural quente, transmitindo confiança e cuidado." },
-  { cat: "FacePost", text: "[FP-Confiança] O Ambiente Acolhedor: A pessoa da foto de referência de pé no centro de sua ótica acolhedora e bem decorada. Ambiente que valoriza conforto e profissionalismo. Prateleiras organizadas com armações ao fundo em desfoque suave." },
-  { cat: "FacePost", text: "[FP-Confiança] A Pequena Grande Ajuda: A pessoa da foto de referência ajudando um cliente idoso a escolher óculos com paciência e dedicação. Demonstrando com cuidado como um ajuste preciso melhora a visão. Expressão de empatia genuína." },
-  { cat: "FacePost", text: "[FP-Confiança] A Visão Clara: A pessoa da foto de referência olhando para a câmera através de uma lente de demonstração, com expressão amigável e profissional. Comunica a alegria de proporcionar visão nítida aos clientes." },
-  { cat: "FacePost", text: "[FP-Confiança] O Legado de Cuidado: A pessoa da foto de referência em sua ótica, expressão serena e orgulhosa. Iluminação suave e nostálgica, transmitindo tradição aliada à inovação e cuidado constante com cada cliente." },
-  // === FACEPOST — Redes Sociais e Marketing ===
-  { cat: "FacePost", text: "[FP-Social] O Reels de Boas-Vindas: A pessoa da foto de referência na entrada da ótica, fazendo gesto de 'venha conhecer' com sorriso acolhedor. Fundo da loja iluminada e convidativa. Formato vertical 9:16 ideal para Reels/TikTok. Energia positiva e acessível." },
-  { cat: "FacePost", text: "[FP-Social] O Antes e Depois: A pessoa da foto de referência segurando dois óculos — um antigo e gasto na mão esquerda, um novo e elegante na mão direita. Expressão de satisfação mostrando a transformação. Layout ideal para post comparativo no Instagram." },
-  { cat: "FacePost", text: "[FP-Social] A Dica do Dia: A pessoa da foto de referência em close, apontando para a câmera com expressão de 'presta atenção'. Segura um óculos com a outra mão. Texto sobreposto 'Dica do Especialista' no estilo de card do Instagram. Fundo limpo da ótica." },
-  { cat: "FacePost", text: "[FP-Social] O Unboxing Premium: A pessoa da foto de referência abrindo uma caixa elegante de óculos, revelando uma armação nova. Expressão de entusiasmo genuíno. Iluminação cinematográfica com destaque no produto sendo revelado. Ideal para Story ou Reels." },
-  { cat: "FacePost", text: "[FP-Social] O Especialista Responde: A pessoa da foto de referência sentada em frente à câmera em estilo de entrevista/podcast, com a ótica ao fundo desfocada. Microfone de lapela discreto. Expressão atenta e profissional, como se estivesse respondendo perguntas dos seguidores. Iluminação de estúdio caseiro bem feita." },
-  // === FACEPOST — Autoridade e Educação ===
-  { cat: "FacePost", text: "[FP-Autoridade] O Professor de Lentes: A pessoa da foto de referência em frente a um quadro branco ou tela, explicando tipos de lentes com diagramas desenhados. Expressão didática e apaixonada. Jaleco branco, postura de palestrante. Iluminação de sala de aula moderna." },
-  { cat: "FacePost", text: "[FP-Autoridade] O Parecer Técnico: A pessoa da foto de referência analisando um laudo óptico com expressão concentrada, usando óculos de grau. Mesa com documentos técnicos e uma armação sob análise. Ambiente de escritório profissional e organizado." },
-  { cat: "FacePost", text: "[FP-Autoridade] A Live Educativa: A pessoa da foto de referência falando para a câmera em formato de live, segurando diferentes tipos de lentes para demonstração. Ring light refletindo nos óculos. Setup profissional de streaming com a ótica ao fundo." },
-  { cat: "FacePost", text: "[FP-Autoridade] O Comparativo de Materiais: A pessoa da foto de referência segurando duas armações de materiais diferentes (metal e acetato), explicando as vantagens de cada uma. Expressão de quem domina o assunto. Close nas mãos e nos materiais com fundo desfocado." },
-  { cat: "FacePost", text: "[FP-Autoridade] O Mito vs Verdade: A pessoa da foto de referência com expressão de 'agora vou te contar', apontando para dois painéis — um com ícone de X vermelho (mito) e outro com check verde (verdade). Óculos na mão como referência visual. Layout didático e moderno." },
-  // === FACEPOST — Bastidores e Dia a Dia ===
-  { cat: "FacePost", text: "[FP-Bastidores] A Abertura da Loja: A pessoa da foto de referência abrindo as portas da ótica pela manhã, luz dourada do nascer do sol entrando. Expressão de orgulho e determinação. Chaves na mão, loja impecável pronta para receber clientes." },
-  { cat: "FacePost", text: "[FP-Bastidores] A Organização do Estoque: A pessoa da foto de referência organizando armações novas que acabaram de chegar. Caixas abertas na bancada, armações sendo dispostas com cuidado. Expressão de empolgação com as novidades. Ambiente de backoffice da ótica." },
-  { cat: "FacePost", text: "[FP-Bastidores] O Café da Manhã do Óptico: A pessoa da foto de referência tomando café na ótica antes de abrir, lendo sobre tendências de eyewear em um tablet. Momento de preparação matinal. Luz suave da manhã, ambiente tranquilo e focado." },
-  { cat: "FacePost", text: "[FP-Bastidores] A Montagem dos Óculos: A pessoa da foto de referência montando lentes em uma armação com equipamento de precisão. Close nas mãos trabalhando com cuidado. Concentração total. Ambiente de laboratório óptico com ferramentas especializadas." },
-  { cat: "FacePost", text: "[FP-Bastidores] O Fim de Expediente: A pessoa da foto de referência fechando a ótica ao final do dia, olhando para trás com satisfação. Luzes da vitrine ainda acesas, rua ao fundo com iluminação noturna. Momento de reflexão e orgulho pelo dia de trabalho." },
-  // === FACEPOST — Lifestyle Profissional ===
-  { cat: "FacePost", text: "[FP-Lifestyle] O Óptico Moderno: A pessoa da foto de referência caminhando por uma rua urbana estilosa usando óculos de sol premium. Outfit profissional mas moderno. Fotografia de rua editorial com bokeh urbano. Confiança e estilo pessoal em destaque." },
-  { cat: "FacePost", text: "[FP-Lifestyle] O Networking do Setor: A pessoa da foto de referência em um evento do setor óptico, conversando com outros profissionais. Crachá de evento visível. Ambiente de convenção ou feira com stands ao fundo desfocados. Expressão engajada e conectada." },
-  { cat: "FacePost", text: "[FP-Lifestyle] A Inspiração Criativa: A pessoa da foto de referência em um café moderno, desenhando sketches de armações em um caderno. Óculos apoiados na mesa, café ao lado. Momento criativo e inspiracional. Iluminação natural de janela, tons quentes." },
-  { cat: "FacePost", text: "[FP-Lifestyle] O Treinamento Contínuo: A pessoa da foto de referência em uma sala de treinamento, fazendo anotações durante um curso de atualização profissional. Tela com conteúdo técnico de lentes ao fundo. Expressão de interesse genuíno e crescimento profissional." },
-  { cat: "FacePost", text: "[FP-Lifestyle] O Retrato do Especialista: A pessoa da foto de referência em retrato profissional de meio corpo, braços cruzados com confiança, usando óculos elegantes. Fundo de estúdio com gradiente suave. Iluminação profissional tipo Rembrandt. Ideal para LinkedIn, site da ótica ou cartão de visita." },
 ];
 
-const categorias = ["Todos", "Promoção", "Lançamento", "Datas", "Produto", "Institucional", "Educativo", "FacePost"];
+const categorias = ["Todos", "Promoção", "Lançamento", "Datas", "Produto", "Institucional", "Educativo"];
 
 export default function CriarPage() {
   const [prompt, setPrompt] = useState("");
@@ -103,7 +55,6 @@ export default function CriarPage() {
   const [logoSaving, setLogoSaving] = useState(false);
   const [logoError, setLogoError] = useState("");
   const [refImage, setRefImage] = useState<string | null>(null);
-  const [facePhotos, setFacePhotos] = useState<string[]>([]);
   const [showPrompts, setShowPrompts] = useState(false);
   const [promptCat, setPromptCat] = useState("Todos");
   const [primaryColor, setPrimaryColor] = useState("");
@@ -147,13 +98,6 @@ export default function CriarPage() {
     reader.readAsDataURL(file);
   }, []);
 
-  const handleFaceUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || facePhotos.length >= 2) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setFacePhotos((prev) => [...prev, ev.target?.result as string]);
-    reader.readAsDataURL(file);
-  }, [facePhotos.length]);
 
   const handleSaveLogo = async () => {
     if (!logoFile && !logo) return;
@@ -223,22 +167,17 @@ export default function CriarPage() {
         secondary2: secondary2 || undefined,
       } : undefined;
 
-      const isFacePost = facePhotos.length > 0;
-      const finalPrompt = isFacePost
-        ? `${prompt}\n\nINSTRUÇÃO CRÍTICA: Mantenha as características faciais exatamente iguais à imagem de referência fornecida. O rosto, cabelo, tom de pele e traços da pessoa devem ser preservados com fidelidade.`
-        : prompt;
-
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: finalPrompt,
+          prompt,
           tipo: formato.label,
           estilo,
           ratio: formato.ratio,
           tool: "CRIADOR",
           logo: useLogo && logo ? logo : undefined,
-          referenceImage: isFacePost ? facePhotos[0] : (refImage || undefined),
+          referenceImage: refImage || undefined,
           colors,
         }),
       });
@@ -333,80 +272,27 @@ export default function CriarPage() {
               ))}
             </div>
 
-            {/* FacePost: upload de fotos do rosto */}
-            {promptCat === "FacePost" && (
-              <div className="rounded-lg border border-accent-violet/20 bg-accent-violet/[0.03] p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-accent-violet uppercase tracking-wider">
-                    Suas Fotos de Referência
-                  </span>
-                  <span className="text-[10px] text-text-muted">
-                    Até 2 fotos do rosto
-                  </span>
-                </div>
-                <div className="flex gap-3">
-                  {facePhotos.map((photo, idx) => (
-                    <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-accent-violet/30 bg-bg-deep">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photo} alt={`Rosto ${idx + 1}`} className="w-full h-full object-cover" />
-                      <button
-                        onClick={() => setFacePhotos((prev) => prev.filter((_, i) => i !== idx))}
-                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-bg-deep/80 flex items-center justify-center text-accent-rose hover:bg-accent-rose/20 transition-colors"
-                      >
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
-                  {facePhotos.length < 2 && (
-                    <label className="cursor-pointer group">
-                      <div className="w-20 h-20 rounded-xl border-2 border-dashed border-accent-violet/30 hover:border-accent-violet/50 bg-bg-deep flex flex-col items-center justify-center gap-1 transition-all">
-                        <svg className="w-5 h-5 text-accent-violet/50 group-hover:text-accent-violet transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                        <span className="text-[9px] text-text-muted">Adicionar</span>
-                      </div>
-                      <input type="file" accept="image/*" className="hidden" onChange={handleFaceUpload} />
-                    </label>
-                  )}
-                </div>
-                {facePhotos.length === 0 && (
-                  <p className="text-[10px] text-text-muted">Suba fotos do seu rosto para gerar posts personalizados com sua imagem.</p>
-                )}
-                {facePhotos.length > 0 && (
-                  <p className="text-[10px] text-accent-violet/70 flex items-center gap-1">
-                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                    {facePhotos.length} foto{facePhotos.length > 1 ? "s" : ""} — será usada como referência ao gerar
-                  </p>
-                )}
-              </div>
-            )}
-
             {/* Prompt list */}
             <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
-              {filteredPrompts.map((p, i) => {
-                const displayText = p.text.replace(/^\[FP-\w+\]\s*/, "");
-                return (
+              {filteredPrompts.map((p, i) => (
                 <button
                   key={i}
                   onClick={() => {
-                    setPrompt(p.text.replace(/^\[FP-\w+\]\s*/, ""));
+                    setPrompt(p.text);
                     setShowPrompts(false);
                   }}
                   className="w-full text-left p-3 rounded-lg bg-bg-deep/50 border border-border hover:border-accent-amber/20 hover:bg-accent-amber/[0.03] transition-all group"
                 >
                   <div className="flex items-start gap-2.5">
                     <span className="shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-accent-amber/10 text-accent-amber/70">
-                      {p.cat === "FacePost" ? displayText.split(":")[0] || "FacePost" : p.cat}
+                      {p.cat}
                     </span>
                     <p className="text-xs text-text-secondary leading-relaxed group-hover:text-text-primary transition-colors">
-                      {p.cat === "FacePost" ? displayText.split(":").slice(1).join(":").trim() : displayText}
+                      {p.text}
                     </p>
                   </div>
                 </button>
-                );
-              })}
+              ))}
             </div>
           </div>
         )}
