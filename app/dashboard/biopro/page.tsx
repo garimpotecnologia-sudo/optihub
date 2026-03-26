@@ -37,7 +37,7 @@ export default function LinktreeEditorPage() {
 
   useEffect(() => {
     async function load() {
-      const res = await fetch("/api/linktree");
+      const res = await fetch("/api/biopro");
       const data = await res.json();
       if (data.linktree) {
         const lt = data.linktree;
@@ -64,7 +64,7 @@ export default function LinktreeEditorPage() {
 
   const checkSlug = useCallback(async (value: string) => {
     if (value.length < 3) { setSlugAvailable(null); return; }
-    const res = await fetch(`/api/linktree/check-slug?slug=${value}`);
+    const res = await fetch(`/api/biopro/check-slug?slug=${value}`);
     const data = await res.json();
     setSlugAvailable(data.available || hasLinktree);
   }, [hasLinktree]);
@@ -120,7 +120,7 @@ export default function LinktreeEditorPage() {
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
-    const res = await fetch("/api/linktree", {
+    const res = await fetch("/api/biopro", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
