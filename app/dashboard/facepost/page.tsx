@@ -285,6 +285,52 @@ export default function FacePostPage() {
                   <img src={item.url} alt={`FacePost ${i + 1}`} className="w-full h-auto object-contain" />
                 </div>
                 <div className="p-3 space-y-2">
+                  {/* Save to gallery */}
+                  {!item.saved ? (
+                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-accent-amber/[0.06] border border-accent-amber/15">
+                      <svg className="w-4 h-4 text-accent-amber shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                      </svg>
+                      <span className="text-[11px] text-accent-amber/80 flex-1">Salvar na galeria?</span>
+                      <button
+                        onClick={async () => {
+                          setResults(prev => prev.map((r, idx) => idx === i ? { ...r, saving: true } : r));
+                          try {
+                            await fetch("/api/gallery", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                imageUrl: item.url,
+                                tool: "CRIADOR",
+                                prompt,
+                                metadata: { tipo: formato.label, categoria: "FacePost" },
+                              }),
+                            });
+                            setResults(prev => prev.map((r, idx) => idx === i ? { ...r, saved: true, saving: false } : r));
+                          } catch {
+                            setResults(prev => prev.map((r, idx) => idx === i ? { ...r, saving: false } : r));
+                          }
+                        }}
+                        disabled={item.saving}
+                        className="btn-press px-3 py-1 rounded-md text-[11px] font-bold bg-accent-green/20 text-accent-green hover:bg-accent-green/30 transition-colors"
+                      >
+                        {item.saving ? "..." : "Salvar"}
+                      </button>
+                      <button
+                        onClick={() => setResults(prev => prev.map((r, idx) => idx === i ? { ...r, saved: true } : r))}
+                        className="text-[11px] text-text-muted hover:text-text-secondary transition-colors"
+                      >
+                        Não
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] text-accent-green/70">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Salvo na galeria
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <a href={item.url} download target="_blank" className="btn-press flex-1 py-2.5 rounded-lg text-xs font-bold bg-accent-violet/10 text-accent-violet hover:bg-accent-violet/20 transition-colors text-center">
                       Download HD
