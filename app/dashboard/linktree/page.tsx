@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import LinktreeView from "@/app/[slug]/LinktreeView";
-import ImagePositioner from "./ImagePositioner";
+import ImageCropModal from "./ImageCropModal";
 
 interface Button {
   label: string;
@@ -24,6 +24,7 @@ export default function LinktreeEditorPage() {
   const [textColor, setTextColor] = useState("#FFFFFF");
   const logoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const [cropModal, setCropModal] = useState<{ src: string; type: "logo" | "cover" } | null>(null);
   const [buttons, setButtons] = useState<Button[]>([]);
   const [isPublished, setIsPublished] = useState(true);
   const [viewsCount, setViewsCount] = useState(0);
@@ -74,19 +75,36 @@ export default function LinktreeEditorPage() {
     return () => clearTimeout(timeout);
   }, [slug, checkSlug, hasLinktree]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "logo" | "cover") => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: "logo" | "cover") => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const objectUrl = URL.createObjectURL(file);
+    setCropModal({ src: objectUrl, type });
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+  };
+
+  const handleCropConfirm = async (blob: Blob) => {
+    if (!cropModal) return;
+    const type = cropModal.type;
+    URL.revokeObjectURL(cropModal.src);
+    setCropModal(null);
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const fileName = `linktree/${user.id}/${type}-${Date.now()}.${file.name.split(".").pop()}`;
-    const { error } = await supabase.storage.from("generations").upload(fileName, file, { upsert: true });
+    const fileName = `linktree/${user.id}/${type}-${Date.now()}.jpg`;
+    const { error } = await supabase.storage.from("generations").upload(fileName, blob, { upsert: true, contentType: "image/jpeg" });
     if (error) return;
 
     const { data: urlData } = supabase.storage.from("generations").getPublicUrl(fileName);
-    if (type === "logo") setLogo(urlData.publicUrl);
-    else setCoverImage(urlData.publicUrl);
+    if (type === "logo") { setLogo(urlData.publicUrl); setLogoPosition("50% 50%"); }
+    else { setCoverImage(urlData.publicUrl); setCoverPosition("50% 50%"); }
+  };
+
+  const handleCropCancel = () => {
+    if (cropModal) URL.revokeObjectURL(cropModal.src);
+    setCropModal(null);
   };
 
   const addButton = () => {
@@ -198,20 +216,21 @@ export default function LinktreeEditorPage() {
                 <label className="block text-[11px] text-text-muted mb-1.5">Logo</label>
                 {logo ? (
                   <div className="space-y-1.5">
-                    <div className="w-20 h-20">
-                      <ImagePositioner src={logo} currentPosition={logoPosition} onPositionChange={setLogoPosition} shape="circle" />
+                    <div className="w-20 h-20 rounded-full border-2 border-border overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={logo} alt="Logo" className="w-full h-full object-cover" />
                     </div>
                     <button type="button" onClick={() => logoInputRef.current?.click()} className="text-[10px] text-accent-green hover:underline">
                       Trocar imagem
                     </button>
-                    <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "logo")} />
+                    <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFileSelect(e, "logo")} />
                   </div>
                 ) : (
                   <label className="cursor-pointer group">
                     <div className="w-20 h-20 rounded-full border-2 border-dashed border-border hover:border-accent-green/30 bg-bg-deep flex items-center justify-center overflow-hidden transition-all">
                       <svg className="w-6 h-6 text-text-muted group-hover:text-accent-green transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                     </div>
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "logo")} />
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileSelect(e, "logo")} />
                   </label>
                 )}
               </div>
@@ -219,20 +238,21 @@ export default function LinktreeEditorPage() {
                 <label className="block text-[11px] text-text-muted mb-1.5">Foto da Loja</label>
                 {coverImage ? (
                   <div className="space-y-1.5">
-                    <div className="h-20 w-full">
-                      <ImagePositioner src={coverImage} currentPosition={coverPosition} onPositionChange={setCoverPosition} shape="rect" />
+                    <div className="h-20 rounded-xl border-2 border-border overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
                     </div>
                     <button type="button" onClick={() => coverInputRef.current?.click()} className="text-[10px] text-accent-green hover:underline">
                       Trocar imagem
                     </button>
-                    <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "cover")} />
+                    <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFileSelect(e, "cover")} />
                   </div>
                 ) : (
                   <label className="cursor-pointer group">
                     <div className="h-20 rounded-xl border-2 border-dashed border-border hover:border-accent-green/30 bg-bg-deep flex items-center justify-center overflow-hidden transition-all">
                       <svg className="w-6 h-6 text-text-muted group-hover:text-accent-green transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5v14.25a1.5 1.5 0 001.5 1.5z" /></svg>
                     </div>
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "cover")} />
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileSelect(e, "cover")} />
                   </label>
                 )}
               </div>
@@ -312,6 +332,17 @@ export default function LinktreeEditorPage() {
           </div>
         </div>
       </div>
+
+      {/* Crop Modal */}
+      {cropModal && (
+        <ImageCropModal
+          imageSrc={cropModal.src}
+          aspect={cropModal.type === "cover" ? 16 / 9 : 1}
+          shape={cropModal.type === "cover" ? "rect" : "round"}
+          onConfirm={handleCropConfirm}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   );
 }
