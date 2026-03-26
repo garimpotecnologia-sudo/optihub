@@ -75,19 +75,19 @@ Responda EXCLUSIVAMENTE em JSON válido, sem markdown, sem comentários. O forma
 
 Cada imagePrompt deve ser um prompt completo e detalhado para geração de imagem por IA, incluindo: conceito visual, estilo, composição, cores, textura. Focado em ótica/eyewear. SEM texto na imagem.`;
 
-    // Generate slide content via OpenRouter
-    const openRouterKey = process.env.OPENROUTER_API_KEY;
-    if (!openRouterKey) return NextResponse.json({ error: "API key não configurada" }, { status: 500 });
-
-    const llmRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    // Generate slide content via CLIProxy
+    const llmRes = await fetch("https://ia.otimusclinic.com.br/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${openRouterKey}`,
+        Authorization: "Bearer sk-oc-5fd55097277e4c3e4b3a1ce5ef7fbd077020f8d4d75b3c33",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash-001",
-        messages: [{ role: "user", content: prompt }],
+        model: "claude-sonnet-4-20250514",
+        messages: [
+          { role: "system", content: "Você é um especialista em marketing digital e copywriting para óticas." },
+          { role: "user", content: prompt },
+        ],
         temperature: 0.8,
         max_tokens: 4096,
       }),
