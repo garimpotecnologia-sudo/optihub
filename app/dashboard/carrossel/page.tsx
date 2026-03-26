@@ -36,7 +36,8 @@ export default function CarrosselPage() {
   const [loadingImages, setLoadingImages] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [editingSlide, setEditingSlide] = useState<number | null>(null);
-  const [step, setStep] = useState<"select" | "copy" | "images">("select");
+  const [variations, setVariations] = useState<Slide[][]>([]);
+  const [step, setStep] = useState<"select" | "choose" | "copy" | "images">("select");
 
   const handleFaceUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -68,13 +69,11 @@ export default function CarrosselPage() {
         setLoadingCopy(false);
         return;
       }
-      const initialSlides: Slide[] = (data.slides || []).map((s: Slide) => ({
-        ...s,
-        imageUrl: "",
-        generating: false,
-      }));
-      setSlides(initialSlides);
-      setStep("copy");
+      const vars: Slide[][] = (data.variations || []).map((v: Slide[]) =>
+        v.map((s: Slide) => ({ ...s, imageUrl: "", generating: false }))
+      );
+      setVariations(vars);
+      setStep("choose");
     } catch (err) {
       alert(`Erro: ${err}`);
     } finally {
@@ -246,7 +245,48 @@ export default function CarrosselPage() {
         </div>
       )}
 
-      {/* ====== STEP 2: Review copys + add face photo ====== */}
+      {/* ====== STEP 2: Choose variation ====== */}
+      {step === "choose" && (
+        <div className="space-y-6 animate-fade-up">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold font-[var(--font-heading)]">Escolha uma variação</h2>
+              <p className="text-xs text-text-muted mt-0.5">Geradas {variations.length} opções. Leia e escolha a melhor.</p>
+            </div>
+            <button onClick={() => { setStep("select"); setVariations([]); }}
+              className="px-4 py-2 rounded-xl border border-border text-text-muted text-xs font-medium hover:text-text-primary transition-colors">
+              Voltar
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {variations.map((v, idx) => (
+              <div key={idx} className="card-base rounded-2xl p-5 space-y-3 flex flex-col">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-accent-amber">Opção {idx + 1}</span>
+                  <span className="text-[10px] text-text-muted">{v.length} slides</span>
+                </div>
+                <div className="flex-1 overflow-y-auto max-h-80 rounded-xl bg-bg-deep border border-border p-3 space-y-3">
+                  {v.map((slide, si) => (
+                    <div key={si} className="space-y-0.5">
+                      <p className="text-[11px] font-bold text-text-primary">Slide {slide.order}: {slide.headline}</p>
+                      <p className="text-[10px] text-text-muted leading-relaxed">{slide.body}</p>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => { setSlides(v); setStep("copy"); }}
+                  className="btn-press w-full py-2.5 rounded-xl bg-gradient-to-r from-accent-amber to-accent-rose text-white text-xs font-bold hover:shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all"
+                >
+                  Escolher esta
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ====== STEP 3: Review copys + add face photo ====== */}
       {step === "copy" && (
         <div className="space-y-6 animate-fade-up">
           <div className="flex items-center justify-between">
@@ -254,7 +294,7 @@ export default function CarrosselPage() {
               <h2 className="text-lg font-bold font-[var(--font-heading)]">Copys do Carrossel</h2>
               <p className="text-xs text-text-muted mt-0.5">Revise e edite os textos. Depois gere as imagens.</p>
             </div>
-            <button onClick={() => { setStep("select"); setSlides([]); }}
+            <button onClick={() => setStep("choose")}
               className="px-4 py-2 rounded-xl border border-border text-text-muted text-xs font-medium hover:text-text-primary transition-colors">
               Voltar
             </button>

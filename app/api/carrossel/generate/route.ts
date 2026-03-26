@@ -62,9 +62,14 @@ export async function POST(request: NextRequest) {
 
     const customInstruction = customTema ? `\nTema/ângulo personalizado: ${customTema}` : "";
 
-    const prompt = `${tmpl.systemPrompt}${customInstruction}
+    // Replace hardcoded "9 slides" in template prompt with actual count
+    const adjustedSystemPrompt = tmpl.systemPrompt.replace(/\b9 slides\b/g, `${numSlides} slides`);
+
+    const prompt = `${adjustedSystemPrompt}${customInstruction}
 
 ${colorInstruction}
+
+IMPORTANTE: Gere exatamente ${numSlides} slides, nem mais nem menos.
 
 Responda EXCLUSIVAMENTE em JSON válido, sem markdown, sem comentários. O formato deve ser:
 [
@@ -75,42 +80,44 @@ Responda EXCLUSIVAMENTE em JSON válido, sem markdown, sem comentários. O forma
 
 Cada imagePrompt deve ser um prompt completo e detalhado para geração de imagem por IA, incluindo: conceito visual, estilo, composição, cores, textura. Focado em ótica/eyewear. SEM texto na imagem.`;
 
-    // Generate slide content via CLIProxy
-    const llmRes = await fetch("https://ia.otimusclinic.com.br/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer sk-oc-5fd55097277e4c3e4b3a1ce5ef7fbd077020f8d4d75b3c33",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        messages: [
-          { role: "system", content: "Você é um especialista em marketing digital e copywriting para óticas." },
-          { role: "user", content: prompt },
-        ],
-        temperature: 0.8,
-        max_tokens: 4096,
-      }),
-    });
+    // Generate 3 variations in parallel via CLIProxy
+    const generateOne = async (): Promise<unknown[] | null> => {
+      try {
+        const res = await fetch("https://ia.otimusclinic.com.br/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer sk-oc-5fd55097277e4c3e4b3a1ce5ef7fbd077020f8d4d75b3c33",
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            messages: [
+              { role: "system", content: "Você é um especialista em marketing digital e copywriting para óticas." },
+              { role: "user", content: prompt },
+            ],
+            temperature: 0.9,
+            max_tokens: 4096,
+          }),
+        });
+        const data = await res.json();
+        const rawText = data?.choices?.[0]?.message?.content || "";
+        const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) return null;
+        const parsed = JSON.parse(jsonMatch[0]);
+        return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+      } catch {
+        return null;
+      }
+    };
 
-    const llmData = await llmRes.json();
-    const rawText = llmData?.choices?.[0]?.message?.content || "";
+    const results = await Promise.all([generateOne(), generateOne(), generateOne()]);
+    const variations = results.filter((r): r is unknown[] => r !== null);
 
-    // Extract JSON from response
-    let slides;
-    try {
-      const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) throw new Error("No JSON found");
-      slides = JSON.parse(jsonMatch[0]);
-    } catch {
-      return NextResponse.json({ error: "Erro ao processar resposta da IA", raw: rawText.slice(0, 500) }, { status: 500 });
+    if (variations.length === 0) {
+      return NextResponse.json({ error: "IA não gerou slides válidos em nenhuma variação" }, { status: 500 });
     }
 
-    if (!Array.isArray(slides) || slides.length === 0) {
-      return NextResponse.json({ error: "IA não gerou slides válidos" }, { status: 500 });
-    }
-
-    return NextResponse.json({ slides, template: tmpl.name });
+    return NextResponse.json({ variations, template: tmpl.name });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Erro interno" }, { status: 500 });
   }
