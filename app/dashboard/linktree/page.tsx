@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import LinktreeView from "@/app/[slug]/LinktreeView";
-import ImageCropModal from "./ImageCropModal";
+import ImageCropModal, { parsePosition } from "./ImageCropModal";
 
 interface Button {
   label: string;
@@ -215,7 +215,7 @@ export default function LinktreeEditorPage() {
                   <div className="space-y-1.5">
                     <div className="w-20 h-20 rounded-full border-2 border-border overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={logo} alt="Logo" className="w-full h-full object-cover" style={{ objectPosition: logoPosition }} />
+                      <img src={logo} alt="Logo" className="w-full h-full object-cover" style={{ objectPosition: `${parsePosition(logoPosition).x}% ${parsePosition(logoPosition).y}%`, transform: parsePosition(logoPosition).zoom !== 1 ? `scale(${parsePosition(logoPosition).zoom})` : undefined, transformOrigin: `${parsePosition(logoPosition).x}% ${parsePosition(logoPosition).y}%` }} />
                     </div>
                     <div className="flex gap-2">
                       <button type="button" onClick={() => setCropModal({ src: logo, type: "logo" })} className="text-[10px] text-accent-green hover:underline">
@@ -242,7 +242,7 @@ export default function LinktreeEditorPage() {
                   <div className="space-y-1.5">
                     <div className="h-20 rounded-xl border-2 border-border overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={coverImage} alt="Cover" className="w-full h-full object-cover" style={{ objectPosition: coverPosition }} />
+                      <img src={coverImage} alt="Cover" className="w-full h-full object-cover" style={{ objectPosition: `${parsePosition(coverPosition).x}% ${parsePosition(coverPosition).y}%`, transform: parsePosition(coverPosition).zoom !== 1 ? `scale(${parsePosition(coverPosition).zoom})` : undefined, transformOrigin: `${parsePosition(coverPosition).x}% ${parsePosition(coverPosition).y}%` }} />
                     </div>
                     <div className="flex gap-2">
                       <button type="button" onClick={() => setCropModal({ src: coverImage, type: "cover" })} className="text-[10px] text-accent-green hover:underline">

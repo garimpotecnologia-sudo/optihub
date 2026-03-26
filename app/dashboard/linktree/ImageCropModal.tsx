@@ -12,14 +12,15 @@ interface ImagePositionModalProps {
   onCancel: () => void;
 }
 
-function parsePosition(pos: string): { x: number; y: number } {
+export function parsePosition(pos: string): { x: number; y: number; zoom: number } {
   const parts = pos.split(" ").map((p) => parseFloat(p));
-  return { x: parts[0] ?? 50, y: parts[1] ?? 50 };
+  return { x: parts[0] ?? 50, y: parts[1] ?? 50, zoom: parts[2] || 1 };
 }
 
 export default function ImageCropModal({ imageSrc, aspect, shape, initialPosition, onConfirm, onCancel }: ImagePositionModalProps) {
-  const [zoom, setZoom] = useState(1);
-  const [pos, setPos] = useState(() => parsePosition(initialPosition || "50% 50%"));
+  const parsed = parsePosition(initialPosition || "50% 50% 1");
+  const [zoom, setZoom] = useState(parsed.zoom);
+  const [pos, setPos] = useState({ x: parsed.x, y: parsed.y });
   const [dragging, setDragging] = useState(false);
   const [imgNatural, setImgNatural] = useState({ w: 0, h: 0 });
   const dragStart = useRef({ x: 0, y: 0, posX: 50, posY: 50 });
@@ -81,8 +82,8 @@ export default function ImageCropModal({ imageSrc, aspect, shape, initialPositio
   }, []);
 
   const handleConfirm = useCallback(() => {
-    onConfirm(`${pos.x.toFixed(1)}% ${pos.y.toFixed(1)}%`);
-  }, [pos, onConfirm]);
+    onConfirm(`${pos.x.toFixed(1)}% ${pos.y.toFixed(1)}% ${zoom.toFixed(2)}`);
+  }, [pos, zoom, onConfirm]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={onCancel}>

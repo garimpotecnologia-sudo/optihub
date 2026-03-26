@@ -1,5 +1,17 @@
 "use client";
 
+function parsePos(pos: string | null) {
+  const parts = (pos || "50% 50% 1").split(" ").map((p) => parseFloat(p));
+  const x = parts[0] ?? 50;
+  const y = parts[1] ?? 50;
+  const zoom = parts[2] || 1;
+  return {
+    objectPosition: `${x}% ${y}%`,
+    transform: zoom !== 1 ? `scale(${zoom})` : undefined,
+    transformOrigin: `${x}% ${y}%`,
+  };
+}
+
 interface Button {
   label: string;
   url: string;
@@ -20,6 +32,8 @@ interface Linktree {
 
 export default function LinktreeView({ linktree }: { linktree: Linktree }) {
   const { title, bio, cover_image, logo, cover_position, logo_position, primary_color, secondary_color, text_color, buttons } = linktree;
+  const coverStyle = parsePos(cover_position);
+  const logoStyle = parsePos(logo_position);
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: secondary_color }}>
@@ -28,14 +42,14 @@ export default function LinktreeView({ linktree }: { linktree: Linktree }) {
         <div className="relative">
           <div className="h-48 sm:h-56 overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={cover_image} alt="" className="w-full h-full object-cover" style={{ objectPosition: cover_position || "50% 50%" }} />
+            <img src={cover_image} alt="" className="w-full h-full object-cover" style={coverStyle} />
             <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, transparent 40%, ${secondary_color})` }} />
           </div>
           {logo && (
             <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 z-10">
               <div className="w-24 h-24 rounded-full border-4 overflow-hidden shadow-lg" style={{ borderColor: primary_color }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={logo} alt="" className="w-full h-full object-cover" style={{ objectPosition: logo_position || "50% 50%" }} />
+                <img src={logo} alt="" className="w-full h-full object-cover" style={logoStyle} />
               </div>
             </div>
           )}
@@ -44,7 +58,7 @@ export default function LinktreeView({ linktree }: { linktree: Linktree }) {
         <div className="pt-12 flex justify-center">
           <div className="w-24 h-24 rounded-full border-4 overflow-hidden shadow-lg" style={{ borderColor: primary_color }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={logo} alt="" className="w-full h-full object-cover" style={{ objectPosition: logo_position || "50% 50%" }} />
+            <img src={logo} alt="" className="w-full h-full object-cover" style={logoStyle} />
           </div>
         </div>
       ) : null}
