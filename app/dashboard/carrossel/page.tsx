@@ -13,6 +13,11 @@ interface CopyVariation {
   slides: SlideCopy[];
 }
 
+interface FinalSlide extends SlideCopy {
+  background: string | null;
+  imagePrompt: string | null;
+}
+
 export default function CarrosselPage() {
   const [theme, setTheme] = useState("");
   const [slideCount, setSlideCount] = useState(5);
@@ -20,8 +25,10 @@ export default function CarrosselPage() {
   const [variationA, setVariationA] = useState<CopyVariation | null>(null);
   const [variationB, setVariationB] = useState<CopyVariation | null>(null);
   const [selections, setSelections] = useState<("A" | "B")[]>([]);
-  const [finalSlides, setFinalSlides] = useState<SlideCopy[]>([]);
-  const [step, setStep] = useState<"setup" | "copySelect" | "editor">("setup");
+  const [finalSlides, setFinalSlides] = useState<FinalSlide[]>([]);
+  const [step, setStep] = useState<"setup" | "copySelect" | "generating" | "editor">("setup");
+  const [imageProgress, setImageProgress] = useState("");
+  const [imageError, setImageError] = useState<string | null>(null);
 
   // ── Step 1: Generate copys ──
   const handleGenerate = async () => {
@@ -53,13 +60,52 @@ export default function CarrosselPage() {
     setSelections((prev) => prev.map((s, i) => i === index ? (s === "A" ? "B" : "A") : s));
   };
 
-  const handleMontarVisual = () => {
+  // ── Step 2→3: Merge copys + batch generate images ──
+  const handleMontarVisual = async () => {
     if (!variationA || !variationB) return;
+
     const merged = selections.map((sel, i) =>
       sel === "A" ? variationA.slides[i] : variationB.slides[i]
     );
-    setFinalSlides(merged);
-    setStep("editor");
+
+    setStep("generating");
+    setImageProgress("Gerando imagens para seus slides...");
+    setImageError(null);
+
+    try {
+      const res = await fetch("/api/carrossel/generate-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slides: merged.map((s) => ({ headline: s.headline, body: s.body, imageDescription: s.imageDescription })),
+          theme,
+          palette: "Neon: bg #0C1A14, accent #03FF94",
+          style: "impacto",
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        setImageError(data.error);
+        return;
+      }
+
+      const enriched: FinalSlide[] = merged.map((s, i) => ({
+        ...s,
+        background: data.slides?.[i]?.imageUrl || null,
+        imagePrompt: data.slides?.[i]?.imagePrompt || null,
+      }));
+
+      setFinalSlides(enriched);
+      setStep("editor");
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : "Erro ao gerar imagens");
+    }
+  };
+
+  const handleRetryImages = () => {
+    handleMontarVisual();
   };
 
   return (
@@ -174,10 +220,69 @@ export default function CarrosselPage() {
         </div>
       )}
 
+      {/* ══════ STEP 2.5: Generating Images ══════ */}
+      {step === "generating" && (
+        <div className="space-y-6 animate-fade-up">
+          <div className="card-base rounded-2xl p-10 flex flex-col items-center justify-center text-center space-y-6">
+            {!imageError ? (
+              <>
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-2xl bg-accent-green/10 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-accent-green animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold font-[var(--font-heading)] text-text-primary">{imageProgress}</h2>
+                  <p className="text-xs text-text-muted mt-2">Isso pode levar até 1 minuto dependendo da quantidade de slides.</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-16 h-16 rounded-2xl bg-accent-rose/10 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-accent-rose" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold font-[var(--font-heading)] text-text-primary">Erro ao gerar imagens</h2>
+                  <p className="text-xs text-text-muted mt-2">{imageError}</p>
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={handleRetryImages}
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-accent-green to-accent-teal text-bg-deep font-bold text-sm hover:shadow-[0_0_20px_rgba(3,255,148,0.2)] transition-all">
+                    Tentar novamente
+                  </button>
+                  <button onClick={() => setStep("copySelect")}
+                    className="px-6 py-2.5 rounded-xl border border-border text-text-muted text-sm font-medium hover:text-text-primary transition-colors">
+                    Voltar
+                  </button>
+                </div>
+              </>
+            )}
+
+            {!imageError && (
+              <button onClick={() => setStep("copySelect")}
+                className="px-4 py-2 rounded-xl border border-border text-text-muted text-xs font-medium hover:text-text-primary transition-colors">
+                Cancelar
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ══════ STEP 3: Visual Editor ══════ */}
       {step === "editor" && (
         <SlideEditor
-          initialSlides={finalSlides.map((s, i) => ({ order: i + 1, headline: s.headline, body: s.body, imagePrompt: s.imageDescription }))}
+          initialSlides={finalSlides.map((s, i) => ({
+            order: i + 1,
+            headline: s.headline,
+            body: s.body,
+            imagePrompt: s.imageDescription,
+            background: s.background || null,
+          }))}
           theme={theme}
           onBack={() => setStep("copySelect")}
         />
