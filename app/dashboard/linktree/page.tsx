@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import LinktreeView from "@/app/[slug]/LinktreeView";
+import ImagePositioner from "./ImagePositioner";
 
 interface Button {
   label: string;
@@ -16,9 +17,13 @@ export default function LinktreeEditorPage() {
   const [bio, setBio] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [logo, setLogo] = useState("");
+  const [coverPosition, setCoverPosition] = useState("50% 50%");
+  const [logoPosition, setLogoPosition] = useState("50% 50%");
   const [primaryColor, setPrimaryColor] = useState("#03FF94");
   const [secondaryColor, setSecondaryColor] = useState("#0C1A14");
   const [textColor, setTextColor] = useState("#FFFFFF");
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const [buttons, setButtons] = useState<Button[]>([]);
   const [isPublished, setIsPublished] = useState(true);
   const [viewsCount, setViewsCount] = useState(0);
@@ -40,6 +45,8 @@ export default function LinktreeEditorPage() {
         setBio(lt.bio || "");
         setCoverImage(lt.cover_image || "");
         setLogo(lt.logo || "");
+        setCoverPosition(lt.cover_position || "50% 50%");
+        setLogoPosition(lt.logo_position || "50% 50%");
         setPrimaryColor(lt.primary_color || "#03FF94");
         setSecondaryColor(lt.secondary_color || "#0C1A14");
         setTextColor(lt.text_color || "#FFFFFF");
@@ -103,6 +110,7 @@ export default function LinktreeEditorPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         slug, title, bio, cover_image: coverImage, logo,
+        cover_position: coverPosition, logo_position: logoPosition,
         primary_color: primaryColor, secondary_color: secondaryColor,
         text_color: textColor, buttons: buttons.filter((b) => b.label && b.url),
         is_published: isPublished,
@@ -122,6 +130,7 @@ export default function LinktreeEditorPage() {
 
   const previewData = {
     title, bio, cover_image: coverImage, logo,
+    cover_position: coverPosition, logo_position: logoPosition,
     primary_color: primaryColor, secondary_color: secondaryColor,
     text_color: textColor, buttons,
   };
@@ -187,31 +196,45 @@ export default function LinktreeEditorPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] text-text-muted mb-1.5">Logo</label>
-                <label className="cursor-pointer group">
-                  <div className="w-20 h-20 rounded-full border-2 border-dashed border-border hover:border-accent-green/30 bg-bg-deep flex items-center justify-center overflow-hidden transition-all">
-                    {logo ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={logo} alt="Logo" className="w-full h-full object-cover" />
-                    ) : (
-                      <svg className="w-6 h-6 text-text-muted group-hover:text-accent-green transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                    )}
+                {logo ? (
+                  <div className="space-y-1.5">
+                    <div className="w-20 h-20">
+                      <ImagePositioner src={logo} currentPosition={logoPosition} onPositionChange={setLogoPosition} shape="circle" />
+                    </div>
+                    <button type="button" onClick={() => logoInputRef.current?.click()} className="text-[10px] text-accent-green hover:underline">
+                      Trocar imagem
+                    </button>
+                    <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "logo")} />
                   </div>
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "logo")} />
-                </label>
+                ) : (
+                  <label className="cursor-pointer group">
+                    <div className="w-20 h-20 rounded-full border-2 border-dashed border-border hover:border-accent-green/30 bg-bg-deep flex items-center justify-center overflow-hidden transition-all">
+                      <svg className="w-6 h-6 text-text-muted group-hover:text-accent-green transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    </div>
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "logo")} />
+                  </label>
+                )}
               </div>
               <div>
                 <label className="block text-[11px] text-text-muted mb-1.5">Foto da Loja</label>
-                <label className="cursor-pointer group">
-                  <div className="h-20 rounded-xl border-2 border-dashed border-border hover:border-accent-green/30 bg-bg-deep flex items-center justify-center overflow-hidden transition-all">
-                    {coverImage ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
-                    ) : (
-                      <svg className="w-6 h-6 text-text-muted group-hover:text-accent-green transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5v14.25a1.5 1.5 0 001.5 1.5z" /></svg>
-                    )}
+                {coverImage ? (
+                  <div className="space-y-1.5">
+                    <div className="h-20 w-full">
+                      <ImagePositioner src={coverImage} currentPosition={coverPosition} onPositionChange={setCoverPosition} shape="rect" />
+                    </div>
+                    <button type="button" onClick={() => coverInputRef.current?.click()} className="text-[10px] text-accent-green hover:underline">
+                      Trocar imagem
+                    </button>
+                    <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "cover")} />
                   </div>
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "cover")} />
-                </label>
+                ) : (
+                  <label className="cursor-pointer group">
+                    <div className="h-20 rounded-xl border-2 border-dashed border-border hover:border-accent-green/30 bg-bg-deep flex items-center justify-center overflow-hidden transition-all">
+                      <svg className="w-6 h-6 text-text-muted group-hover:text-accent-green transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5v14.25a1.5 1.5 0 001.5 1.5z" /></svg>
+                    </div>
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "cover")} />
+                  </label>
+                )}
               </div>
             </div>
           </div>

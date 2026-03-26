@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
     const body = await request.json();
-    const { slug, title, bio, cover_image, logo, primary_color, secondary_color, text_color, buttons, is_published } = body;
+    const { slug, title, bio, cover_image, logo, cover_position, logo_position, primary_color, secondary_color, text_color, buttons, is_published } = body;
 
     if (!slug || slug.length < 3) return NextResponse.json({ error: "Slug deve ter pelo menos 3 caracteres" }, { status: 400 });
     if (/[^a-z0-9-]/.test(slug)) return NextResponse.json({ error: "Slug só pode ter letras minúsculas, números e hífens" }, { status: 400 });
@@ -40,6 +40,8 @@ export async function POST(request: NextRequest) {
       bio: bio || null,
       cover_image: cover_image || null,
       logo: logo || null,
+      cover_position: cover_position || "50% 50%",
+      logo_position: logo_position || "50% 50%",
       primary_color: primary_color || "#03FF94",
       secondary_color: secondary_color || "#0C1A14",
       text_color: text_color || "#FFFFFF",
