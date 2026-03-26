@@ -20,6 +20,7 @@ const toolTabs: { id: Tool; label: string; color: string }[] = [
   { id: "EDITOR", label: "Editor de Produtos", color: "accent-violet" },
   { id: "TRYON", label: "Try-On Virtual", color: "accent-teal" },
   { id: "ASSISTENTE", label: "Assistente", color: "accent-amber" },
+  { id: "FACEPOST", label: "FacePost", color: "accent-rose" },
 ];
 
 const toolBadge: Record<string, string> = {
@@ -27,6 +28,7 @@ const toolBadge: Record<string, string> = {
   EDITOR: "text-accent-violet bg-accent-violet/10",
   TRYON: "text-accent-teal bg-accent-teal/10",
   ASSISTENTE: "text-accent-amber bg-accent-amber/10",
+  FACEPOST: "text-accent-rose bg-accent-rose/10",
 };
 
 const toolLabel: Record<string, string> = {
@@ -34,6 +36,7 @@ const toolLabel: Record<string, string> = {
   EDITOR: "Editor de Produtos",
   TRYON: "Try-On Virtual",
   ASSISTENTE: "Assistente",
+  FACEPOST: "FacePost",
 };
 
 export default function GaleriaPage() {

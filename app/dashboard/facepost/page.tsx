@@ -301,9 +301,9 @@ export default function FacePostPage() {
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({
                                 imageUrl: item.url,
-                                tool: "CRIADOR",
+                                tool: "FACEPOST",
                                 prompt,
-                                metadata: { tipo: formato.label, categoria: "FacePost" },
+                                metadata: { tipo: formato.label },
                               }),
                             });
                             setResults(prev => prev.map((r, idx) => idx === i ? { ...r, saved: true, saving: false } : r));
