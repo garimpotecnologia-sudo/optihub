@@ -102,6 +102,16 @@ export default function GaleriaPage() {
         </p>
       </div>
 
+      {/* 30-day warning */}
+      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-accent-amber/5 border border-accent-amber/15">
+        <svg className="w-4 h-4 text-accent-amber shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+        <p className="text-[11px] text-text-muted">
+          <span className="font-semibold text-accent-amber">Aviso:</span> As imagens ficam disponíveis na galeria por <span className="font-semibold text-text-primary">30 dias</span>. Faça o download para seu dispositivo antes do prazo.
+        </p>
+      </div>
+
       {/* Tabs por ferramenta */}
       <div className="flex flex-wrap gap-2">
         {toolTabs.map((t) => (

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { Download, ChevronLeft, ChevronRight, Upload, Type, Palette, Layout } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, Upload, Type, Palette, Layout, Save, AlertTriangle } from "lucide-react";
+import { createClient } from "@/lib/supabase";
 
 // ── Types ──
 interface SlideData {
@@ -104,8 +105,11 @@ export default function SlideEditor({ initialSlides, onBack }: SlideEditorProps)
   const [activeFont, setActiveFont] = useState(FONTS[0]);
   const [sidebarTab, setSidebarTab] = useState<"text" | "style" | "palette">("text");
   const [exporting, setExporting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const supabase = createClient();
 
   const slide = slides[activeSlide];
 
@@ -166,6 +170,63 @@ export default function SlideEditor({ initialSlides, onBack }: SlideEditorProps)
     setExporting(false);
   }, [slides, exportSlide]);
 
+  // Save slide to gallery: capture → upload to Supabase Storage → save via API
+  const saveSlideToGallery = useCallback(async (index: number) => {
+    const el = slideRefs.current[index];
+    if (!el) return;
+
+    setSaving(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const inner = el.querySelector("[data-slide-inner]") as HTMLElement;
+      if (!inner) return;
+
+      const prev = inner.style.transform;
+      inner.style.transform = "none";
+
+      const canvas = await html2canvas(inner, { width: 1080, height: 1350, scale: 1, useCORS: true, backgroundColor: null });
+      inner.style.transform = prev;
+
+      // Convert to blob
+      const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/png"));
+
+      // Upload to Supabase Storage
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const fileName = `carrossel/${user.id}/slide-${slides[index].order}-${Date.now()}.png`;
+      const { error: uploadErr } = await supabase.storage.from("generations").upload(fileName, blob, { contentType: "image/png" });
+      if (uploadErr) throw uploadErr;
+
+      const { data: urlData } = supabase.storage.from("generations").getPublicUrl(fileName);
+
+      // Save to gallery via API
+      await fetch("/api/gallery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageUrl: urlData.publicUrl,
+          tool: "CARROSSEL",
+          prompt: slides[index].headline,
+          metadata: { style: activeStyle.id, palette: activePalette.name, font: activeFont.name },
+        }),
+      });
+
+      setSavedCount((c) => c + 1);
+    } finally {
+      setSaving(false);
+    }
+  }, [slides, supabase, activeStyle, activePalette, activeFont]);
+
+  const saveAllToGallery = useCallback(async () => {
+    setSaving(true);
+    setSavedCount(0);
+    for (let i = 0; i < slides.length; i++) {
+      await saveSlideToGallery(i);
+    }
+    setSaving(false);
+  }, [slides, saveSlideToGallery]);
+
   // Background CSS for a slide
   const slideBg = (s: SlideData) => {
     if (s.background) return { backgroundImage: `url(${s.background})`, backgroundSize: "cover", backgroundPosition: "center" };
@@ -195,12 +256,25 @@ export default function SlideEditor({ initialSlides, onBack }: SlideEditorProps)
             <button onClick={onBack} className="px-4 py-2 rounded-xl border border-border text-text-muted text-xs font-medium hover:text-text-primary transition-colors">
               Voltar
             </button>
-            <button onClick={exportAll} disabled={exporting}
-              className="btn-press px-6 py-2 rounded-xl bg-gradient-to-r from-accent-green to-accent-teal text-bg-deep text-xs font-bold hover:shadow-[0_0_20px_rgba(3,255,148,0.2)] transition-all disabled:opacity-40 flex items-center gap-1.5">
+            <button onClick={saveAllToGallery} disabled={saving || exporting}
+              className="btn-press px-5 py-2 rounded-xl bg-accent-amber/10 border border-accent-amber/20 text-accent-amber text-xs font-bold hover:bg-accent-amber/20 transition-all disabled:opacity-40 flex items-center gap-1.5">
+              <Save className="w-3.5 h-3.5" />
+              {saving ? `Salvando ${savedCount}/${slides.length}...` : "Salvar na Galeria"}
+            </button>
+            <button onClick={exportAll} disabled={exporting || saving}
+              className="btn-press px-5 py-2 rounded-xl bg-gradient-to-r from-accent-green to-accent-teal text-bg-deep text-xs font-bold hover:shadow-[0_0_20px_rgba(3,255,148,0.2)] transition-all disabled:opacity-40 flex items-center gap-1.5">
               <Download className="w-3.5 h-3.5" />
               {exporting ? "Exportando..." : "Baixar Todos"}
             </button>
           </div>
+        </div>
+
+        {/* 30-day warning */}
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-accent-amber/5 border border-accent-amber/15">
+          <AlertTriangle className="w-4 h-4 text-accent-amber shrink-0" />
+          <p className="text-[11px] text-text-muted">
+            <span className="font-semibold text-accent-amber">Aviso:</span> As imagens salvas na galeria ficam disponíveis por <span className="font-semibold text-text-primary">30 dias</span>. Baixe para seu dispositivo antes do prazo.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
@@ -294,8 +368,13 @@ export default function SlideEditor({ initialSlides, onBack }: SlideEditorProps)
               </div>
             )}
 
-            {/* Download single */}
-            <div className="flex justify-center">
+            {/* Download/Save single */}
+            <div className="flex justify-center gap-2">
+              <button onClick={() => saveSlideToGallery(activeSlide)} disabled={saving}
+                className="px-4 py-2 rounded-xl border border-accent-amber/20 text-accent-amber text-xs font-medium hover:bg-accent-amber/10 transition-colors flex items-center gap-1.5 disabled:opacity-40">
+                <Save className="w-3.5 h-3.5" />
+                Salvar slide {slide?.order}
+              </button>
               <button onClick={() => exportSlide(activeSlide)} disabled={exporting}
                 className="px-4 py-2 rounded-xl border border-border text-text-muted text-xs font-medium hover:text-accent-green hover:border-accent-green/30 transition-colors flex items-center gap-1.5 disabled:opacity-40">
                 <Download className="w-3.5 h-3.5" />
