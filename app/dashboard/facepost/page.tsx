@@ -225,7 +225,7 @@ export default function FacePostPage() {
         {/* Formato */}
         <div>
           <label className="block text-xs font-semibold text-text-muted mb-3 uppercase tracking-wider">Formato</label>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {formatos.map((f) => (
               <button
                 key={f.id}

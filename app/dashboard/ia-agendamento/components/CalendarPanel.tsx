@@ -15,6 +15,7 @@ interface Appointment {
 }
 
 const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const dayNamesShort = ["D", "S", "T", "Q", "Q", "S", "S"];
 const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
 const statusColors: Record<string, string> = {
@@ -96,8 +97,11 @@ export default function CalendarPanel() {
 
         {/* Day headers */}
         <div className="grid grid-cols-7 gap-1 mb-2">
-          {dayNames.map((d) => (
-            <div key={d} className="text-center text-[11px] text-text-muted font-medium py-1">{d}</div>
+          {dayNames.map((d, i) => (
+            <div key={d} className="text-center text-[11px] text-text-muted font-medium py-1">
+              <span className="hidden sm:inline">{d}</span>
+              <span className="sm:hidden">{dayNamesShort[i]}</span>
+            </div>
           ))}
         </div>
 

@@ -139,7 +139,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-up delay-100">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-up delay-100">
         {/* Usage Card - Featured */}
         <div className="card-featured rounded-2xl p-5 sm:col-span-2">
           <div className="flex items-start justify-between">

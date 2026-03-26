@@ -115,27 +115,27 @@ export default function AvailabilityConfig() {
 
         <div className="space-y-2">
           {config.map((day, index) => (
-            <div key={day.day_of_week} className={`flex items-center gap-4 p-3 rounded-xl transition-colors ${
+            <div key={day.day_of_week} className={`p-3 rounded-xl transition-colors ${
               day.is_available ? "bg-bg-deep" : "bg-bg-deep/50 opacity-60"
             }`}>
-              {/* Toggle */}
-              <button
-                onClick={() => updateDay(index, { is_available: !day.is_available })}
-                className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${
-                  day.is_available ? "bg-accent-teal/30" : "bg-bg-card border border-border"
-                }`}
-              >
-                <div className={`absolute top-0.5 w-4 h-4 rounded-full transition-all ${
-                  day.is_available ? "bg-accent-teal" : "bg-text-muted"
-                }`} style={{ left: day.is_available ? "22px" : "2px" }} />
-              </button>
+              {/* Row 1: Toggle + Day name */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => updateDay(index, { is_available: !day.is_available })}
+                  className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${
+                    day.is_available ? "bg-accent-teal/30" : "bg-bg-card border border-border"
+                  }`}
+                >
+                  <div className={`absolute top-0.5 w-4 h-4 rounded-full transition-all ${
+                    day.is_available ? "bg-accent-teal" : "bg-text-muted"
+                  }`} style={{ left: day.is_available ? "22px" : "2px" }} />
+                </button>
+                <span className="text-xs font-medium">{dayNames[day.day_of_week]}</span>
+              </div>
 
-              {/* Day name */}
-              <span className="text-xs font-medium w-20 shrink-0">{dayNames[day.day_of_week]}</span>
-
+              {/* Row 2: Time inputs (only when available) */}
               {day.is_available && (
-                <>
-                  {/* Start time */}
+                <div className="flex flex-wrap items-center gap-2 mt-2 ml-13 sm:ml-0 sm:mt-2">
                   <input
                     type="time"
                     value={day.start_time}
@@ -149,7 +149,6 @@ export default function AvailabilityConfig() {
                     onChange={(e) => updateDay(index, { end_time: e.target.value })}
                     className="px-2 py-1.5 rounded-lg bg-bg-card border border-border text-text-primary text-xs focus:outline-none focus:border-accent-teal/30"
                   />
-                  <span className="text-text-muted text-xs shrink-0">Slot:</span>
                   <select
                     value={day.slot_duration_minutes}
                     onChange={(e) => updateDay(index, { slot_duration_minutes: parseInt(e.target.value) })}

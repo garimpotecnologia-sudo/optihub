@@ -232,7 +232,7 @@ export default function EditorPage() {
         {/* Formato — igual ao Criador de Artes */}
         <div>
           <span className="text-[10px] text-text-muted uppercase tracking-wider font-semibold block mb-2">Formato</span>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {formatos.map((f) => (
               <button
                 key={f.id}
