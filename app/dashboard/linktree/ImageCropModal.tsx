@@ -3,155 +3,105 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { X, ZoomIn, ZoomOut, Check } from "lucide-react";
 
-interface ImageCropModalProps {
+interface ImagePositionModalProps {
   imageSrc: string;
   aspect: number;
   shape: "rect" | "round";
-  onConfirm: (blob: Blob) => void;
+  initialPosition?: string;
+  onConfirm: (position: string) => void;
   onCancel: () => void;
 }
 
-export default function ImageCropModal({ imageSrc, aspect, shape, onConfirm, onCancel }: ImageCropModalProps) {
+function parsePosition(pos: string): { x: number; y: number } {
+  const parts = pos.split(" ").map((p) => parseFloat(p));
+  return { x: parts[0] ?? 50, y: parts[1] ?? 50 };
+}
+
+export default function ImageCropModal({ imageSrc, aspect, shape, initialPosition, onConfirm, onCancel }: ImagePositionModalProps) {
   const [zoom, setZoom] = useState(1);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [pos, setPos] = useState(() => parsePosition(initialPosition || "50% 50%"));
   const [dragging, setDragging] = useState(false);
-  const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
-  const dragStart = useRef({ x: 0, y: 0, ox: 0, oy: 0 });
-  const imgRef = useRef<HTMLImageElement>(null);
+  const [imgNatural, setImgNatural] = useState({ w: 0, h: 0 });
+  const dragStart = useRef({ x: 0, y: 0, posX: 50, posY: 50 });
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Crop area size (fixed in the modal)
-  const cropSize = 280;
-  const cropW = aspect >= 1 ? cropSize : cropSize * aspect;
-  const cropH = aspect >= 1 ? cropSize / aspect : cropSize;
+  // Viewport size in the modal
+  const viewportSize = 280;
+  const viewportW = aspect >= 1 ? viewportSize : viewportSize * aspect;
+  const viewportH = aspect >= 1 ? viewportSize / aspect : viewportSize;
 
+  // Load image natural dimensions
   useEffect(() => {
     const img = new Image();
-    img.onload = () => setImgSize({ w: img.naturalWidth, h: img.naturalHeight });
+    img.onload = () => setImgNatural({ w: img.naturalWidth, h: img.naturalHeight });
     img.src = imageSrc;
   }, [imageSrc]);
 
-  // Clamp offset so image always covers the crop area
-  const clampOffset = useCallback((ox: number, oy: number, z: number) => {
-    if (!imgSize.w || !imgSize.h) return { x: 0, y: 0 };
-
-    // Displayed image size at current zoom
-    const scale = Math.max(cropW / imgSize.w, cropH / imgSize.h) * z;
-    const dispW = imgSize.w * scale;
-    const dispH = imgSize.h * scale;
-
-    const maxX = Math.max(0, (dispW - cropW) / 2);
-    const maxY = Math.max(0, (dispH - cropH) / 2);
-
-    return {
-      x: Math.min(maxX, Math.max(-maxX, ox)),
-      y: Math.min(maxY, Math.max(-maxY, oy)),
-    };
-  }, [imgSize, cropW, cropH]);
+  // The image is displayed with object-fit: cover + scale(zoom)
+  // object-position controls which part is visible
+  // Dragging changes the object-position percentages
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     setDragging(true);
-    dragStart.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y };
-  }, [offset]);
+    dragStart.current = { x: e.clientX, y: e.clientY, posX: pos.x, posY: pos.y };
+  }, [pos]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragging) return;
+    if (!dragging || !imgNatural.w || !imgNatural.h) return;
     e.preventDefault();
+
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
-    const clamped = clampOffset(dragStart.current.ox + dx, dragStart.current.oy + dy, zoom);
-    setOffset(clamped);
-  }, [dragging, zoom, clampOffset]);
+
+    // Calculate how much overflow exists at current zoom
+    // object-cover scale: image fills the viewport
+    const coverScale = Math.max(viewportW / imgNatural.w, viewportH / imgNatural.h) * zoom;
+    const overflowX = imgNatural.w * coverScale - viewportW;
+    const overflowY = imgNatural.h * coverScale - viewportH;
+
+    // Convert pixel drag to position percentage change
+    // Drag right → image moves right → show more of the left side → decrease X%
+    const deltaX = overflowX > 1 ? -(dx / overflowX) * 100 : 0;
+    const deltaY = overflowY > 1 ? -(dy / overflowY) * 100 : 0;
+
+    setPos({
+      x: Math.min(100, Math.max(0, dragStart.current.posX + deltaX)),
+      y: Math.min(100, Math.max(0, dragStart.current.posY + deltaY)),
+    });
+  }, [dragging, imgNatural, viewportW, viewportH, zoom]);
 
   const handlePointerUp = useCallback(() => {
     setDragging(false);
   }, []);
 
   const handleZoom = useCallback((newZoom: number) => {
-    const z = Math.min(5, Math.max(1, newZoom));
-    setZoom(z);
-    setOffset((prev) => clampOffset(prev.x, prev.y, z));
-  }, [clampOffset]);
+    setZoom(Math.min(3, Math.max(1, newZoom)));
+  }, []);
 
-  const handleConfirm = useCallback(async () => {
-    if (!imgSize.w || !imgSize.h) return;
-
-    const canvas = document.createElement("canvas");
-    // Output resolution: match crop aspect at a good quality
-    const outputW = aspect >= 1 ? 800 : Math.round(800 * aspect);
-    const outputH = aspect >= 1 ? Math.round(800 / aspect) : 800;
-    canvas.width = outputW;
-    canvas.height = outputH;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Calculate which part of the source image is in the crop area
-    const baseScale = Math.max(cropW / imgSize.w, cropH / imgSize.h);
-    const scale = baseScale * zoom;
-    const dispW = imgSize.w * scale;
-    const dispH = imgSize.h * scale;
-
-    // Center of displayed image relative to crop area center
-    const centerX = dispW / 2 + offset.x;
-    const centerY = dispH / 2 + offset.y;
-
-    // Crop area in displayed image coordinates (top-left origin)
-    const cropLeft = centerX - cropW / 2;
-    const cropTop = centerY - cropH / 2;
-
-    // Convert back to source image coordinates
-    const srcX = cropLeft / scale;
-    const srcY = cropTop / scale;
-    const srcW = cropW / scale;
-    const srcH = cropH / scale;
-
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      // If round shape, clip to circle
-      if (shape === "round") {
-        ctx.beginPath();
-        ctx.arc(outputW / 2, outputH / 2, outputW / 2, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-      }
-
-      ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, outputW, outputH);
-
-      canvas.toBlob((blob) => {
-        if (blob) onConfirm(blob);
-      }, "image/jpeg", 0.9);
-    };
-    img.src = imageSrc;
-  }, [imgSize, zoom, offset, cropW, cropH, aspect, shape, imageSrc, onConfirm]);
-
-  // Image display style
-  const baseScale = imgSize.w && imgSize.h ? Math.max(cropW / imgSize.w, cropH / imgSize.h) : 1;
-  const scale = baseScale * zoom;
-  const dispW = imgSize.w * scale;
-  const dispH = imgSize.h * scale;
+  const handleConfirm = useCallback(() => {
+    onConfirm(`${pos.x.toFixed(1)}% ${pos.y.toFixed(1)}%`);
+  }, [pos, onConfirm]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={onCancel}>
       <div className="bg-bg-card border border-border rounded-2xl p-5 space-y-4 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-text-primary">Ajustar imagem</h3>
+          <h3 className="text-sm font-semibold text-text-primary">Ajustar posição</h3>
           <button onClick={onCancel} className="p-1 rounded-lg hover:bg-bg-card-hover text-text-muted">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Crop area */}
+        {/* Viewport */}
         <div className="flex justify-center">
           <div
             ref={containerRef}
             className="relative overflow-hidden bg-black"
             style={{
-              width: cropW,
-              height: cropH,
+              width: viewportW,
+              height: viewportH,
               borderRadius: shape === "round" ? "50%" : "12px",
               cursor: dragging ? "grabbing" : "grab",
             }}
@@ -161,37 +111,36 @@ export default function ImageCropModal({ imageSrc, aspect, shape, onConfirm, onC
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              ref={imgRef}
               src={imageSrc}
               alt=""
               draggable={false}
-              className="select-none"
+              className="w-full h-full object-cover select-none"
               style={{
-                position: "absolute",
-                width: dispW,
-                height: dispH,
-                left: `calc(50% - ${dispW / 2}px + ${offset.x}px)`,
-                top: `calc(50% - ${dispH / 2}px + ${offset.y}px)`,
+                objectPosition: `${pos.x}% ${pos.y}%`,
+                transform: `scale(${zoom})`,
+                transformOrigin: `${pos.x}% ${pos.y}%`,
               }}
             />
           </div>
         </div>
 
+        <p className="text-[10px] text-text-muted text-center">Arraste para reposicionar</p>
+
         {/* Zoom control */}
         <div className="flex items-center gap-3 px-2">
-          <button type="button" onClick={() => handleZoom(zoom - 0.2)} className="p-1 rounded-lg hover:bg-bg-card-hover text-text-muted">
+          <button type="button" onClick={() => handleZoom(zoom - 0.15)} className="p-1 rounded-lg hover:bg-bg-card-hover text-text-muted">
             <ZoomOut className="w-4 h-4" />
           </button>
           <input
             type="range"
             min={1}
-            max={5}
-            step={0.1}
+            max={3}
+            step={0.05}
             value={zoom}
             onChange={(e) => handleZoom(parseFloat(e.target.value))}
             className="flex-1 accent-accent-green h-1"
           />
-          <button type="button" onClick={() => handleZoom(zoom + 0.2)} className="p-1 rounded-lg hover:bg-bg-card-hover text-text-muted">
+          <button type="button" onClick={() => handleZoom(zoom + 0.15)} className="p-1 rounded-lg hover:bg-bg-card-hover text-text-muted">
             <ZoomIn className="w-4 h-4" />
           </button>
         </div>
