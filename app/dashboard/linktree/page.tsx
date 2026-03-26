@@ -158,7 +158,7 @@ export default function LinktreeEditorPage() {
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-[700] font-[var(--font-heading)] tracking-tight">LinkTree</h1>
+          <h1 className="text-2xl font-[700] font-[var(--font-heading)] tracking-tight">BioPRO</h1>
           <p className="text-text-secondary text-sm mt-1">Crie sua página de links para o Instagram.</p>
         </div>
         {hasLinktree && (
@@ -317,7 +317,7 @@ export default function LinktreeEditorPage() {
                 <button onClick={addButton} className="text-[11px] text-accent-green font-medium hover:underline">+ Adicionar</button>
               )}
             </div>
-            {buttons.length === 0 && <p className="text-[10px] text-text-muted">Adicione botões para seu linktree.</p>}
+            {buttons.length === 0 && <p className="text-[10px] text-text-muted">Adicione botões para seu BioPRO.</p>}
             <div className="space-y-2">
               {buttons.map((btn, i) => (
                 <div key={i} className="flex gap-2 items-center">
@@ -338,7 +338,7 @@ export default function LinktreeEditorPage() {
           <div className="flex items-center gap-3">
             <button onClick={handleSave} disabled={saving || !slug || slug.length < 3}
               className="btn-press px-8 py-3 rounded-xl bg-gradient-to-r from-accent-green to-accent-teal text-bg-deep font-bold text-sm hover:shadow-[0_0_30px_rgba(3,255,148,0.25)] transition-all disabled:opacity-40">
-              {saving ? "Salvando..." : saved ? "Salvo!" : hasLinktree ? "Atualizar" : "Criar LinkTree"}
+              {saving ? "Salvando..." : saved ? "Salvo!" : hasLinktree ? "Atualizar" : "Criar BioPRO"}
             </button>
             <button onClick={() => setIsPublished(!isPublished)}
               className={`px-4 py-3 rounded-xl text-xs font-medium border transition-all ${isPublished ? "border-accent-green/20 text-accent-green bg-accent-green/5" : "border-border text-text-muted"}`}>
