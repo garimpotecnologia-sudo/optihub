@@ -33,12 +33,14 @@ export async function GET() {
       .select("likes_count")
       .eq("user_id", user.id);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       ...profile,
       monthlyUsage: usage || 0,
       totalGenerations: totalGenerations || 0,
       totalLikes: totalLikes || 0,
     });
+    response.headers.set("Cache-Control", "private, max-age=60, stale-while-revalidate=120");
+    return response;
   } catch (error) {
     console.error("Profile error:", error);
     return NextResponse.json({ error: "Erro" }, { status: 500 });

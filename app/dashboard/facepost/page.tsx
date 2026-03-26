@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { promptsFacePost } from "@/lib/prompts-facepost";
 
 const formatos = [
   { id: "post-feed", label: "Post Feed", desc: "Instagram / Facebook", ratio: "1:1", w: 40, h: 40 },
@@ -13,56 +14,7 @@ const subcategorias = [
   "Todos", "Consultor", "Tecnologia", "Estilo", "Confiança", "Social", "Autoridade", "Bastidores", "Lifestyle",
 ];
 
-const promptsFacePost = [
-  // Consultor Profissional
-  { sub: "Consultor", title: "O Consultor Atencioso", text: "A pessoa da foto de referência de pé em uma ótica bem iluminada e moderna, conversando com um cliente sorridente. Segura um par de óculos com uma mão e com a outra aponta para detalhes na bancada para demonstrar precisão visual. Expressão de profissionalismo e empatia. Iluminação natural de loja, fundo com vitrines de armações desfocadas." },
-  { sub: "Consultor", title: "A Calibração Perfeita", text: "Close-up nas mãos da pessoa da foto de referência, especialista em ótica, usando ferramentas delicadas para ajustar uma armação de óculos. Na bancada de trabalho, instrumentos de precisão óptica organizados. Fundo de laboratório óptico limpo e profissional. Iluminação focada nas mãos e no trabalho." },
-  { sub: "Consultor", title: "O Olhar Científico", text: "A pessoa da foto de referência com expressão concentrada, vestindo jaleco branco. Olha através de um equipamento óptico de alta precisão com iluminação controlada e científica. Ambiente de laboratório moderno e tecnológico ao fundo." },
-  { sub: "Consultor", title: "A Explicação Tecnológica", text: "A pessoa da foto de referência explicando a tecnologia de lentes para um cliente atento. Aponta para um diagrama técnico de uma lente enquanto segura uma armação, ilustrando a escala dos tratamentos anti-reflexo. Estilo de foto corporativa moderna com iluminação profissional." },
-  { sub: "Consultor", title: "A Revisão de Qualidade", text: "A pessoa da foto de referência inspecionando uma lente de óculos sob luz especial de controle de qualidade. Expressão de rigor profissional e atenção aos detalhes. Foco nítido na lente e nas mãos. Ambiente de laboratório óptico com equipamentos modernos ao fundo." },
-  // Tecnologia e Modernidade
-  { sub: "Tecnologia", title: "A Gravação na Lente", text: "Close-up extremo da mão da pessoa da foto de referência segurando uma lente de óculos transparente. Sob luz especial, padrões microscópicos de tecnologia são visíveis como marca de qualidade. Fundo de equipamentos ópticos modernos e sofisticados." },
-  { sub: "Tecnologia", title: "O Scanner de Alta Tecnologia", text: "A pessoa da foto de referência operando um scanner óptico 3D avançado em ambiente de laboratório high-tech. Telas com dados holográficos ao fundo. Estilo de foto de engenharia de precisão." },
-  { sub: "Tecnologia", title: "O Revestimento Avançado", text: "A pessoa da foto de referência demonstrando o efeito repelente de água de uma lente com nanotecnologia. Uma gota de água escorrega perfeitamente sobre a superfície da lente. Iluminação difusa e limpa, ambiente de apresentação tecnológica." },
-  { sub: "Tecnologia", title: "A Medição de Precisão", text: "A pessoa da foto de referência usando um dispositivo de medição pupilar digital de última geração em um cliente. Tela do dispositivo visível com dados precisos. Foco na tecnologia e no atendimento cuidadoso." },
-  { sub: "Tecnologia", title: "A Inspeção do Material", text: "Close-up na mão da pessoa da foto de referência segurando uma haste de óculos feita de material de alta tecnologia. Comparando a textura e a leveza do material com instrumentos de precisão. Expressão de curiosidade tecnológica e expertise." },
-  // Estilo e Design
-  { sub: "Estilo", title: "O Curador de Estilo", text: "A pessoa da foto de referência na seção de moda da ótica, segurando uma armação de design exclusivo com elegância. Vitrines com armações premium ao fundo em bokeh suave. Estilo de foto de moda de rua de alta qualidade, iluminação natural." },
-  { sub: "Estilo", title: "A Joia Escondida", text: "Close-up da pessoa da foto de referência focando na mão que segura uma armação de óculos de sol sofisticada. Detalhes da dobradiça e design premium visíveis. Iluminação lateral dramática destacando os acabamentos." },
-  { sub: "Estilo", title: "O Foco no Detalhe", text: "A pessoa da foto de referência olhando diretamente para a câmera, usando óculos de grau modernos e elegantes. Na mão, segura uma armação exclusiva, enfatizando que os menores detalhes fazem a maior diferença. Iluminação de estúdio suave e profissional." },
-  { sub: "Estilo", title: "A Vitrine de Design", text: "A pessoa da foto de referência arrumando uma vitrine de óculos com cuidado artístico. Posiciona armações de design com precisão, criando uma composição visual premium. Reflexos suaves no vidro da vitrine." },
-  { sub: "Estilo", title: "A Armação Exclusiva", text: "A pessoa da foto de referência segurando uma armação de acetato vibrante e moderna, apresentando-a como peça de arte. Expressão de orgulho e inovação. Estilo de foto de moda de vanguarda com iluminação criativa." },
-  // Confiança e Acolhimento
-  { sub: "Confiança", title: "O Sorriso de Confiança", text: "A pessoa da foto de referência olhando para a câmera com sorriso caloroso e confiante, braços cruzados em postura profissional. Atrás, a ótica bem organizada e acolhedora. Iluminação natural quente, transmitindo confiança e cuidado." },
-  { sub: "Confiança", title: "O Ambiente Acolhedor", text: "A pessoa da foto de referência de pé no centro de sua ótica acolhedora e bem decorada. Ambiente que valoriza conforto e profissionalismo. Prateleiras organizadas com armações ao fundo em desfoque suave." },
-  { sub: "Confiança", title: "A Pequena Grande Ajuda", text: "A pessoa da foto de referência ajudando um cliente idoso a escolher óculos com paciência e dedicação. Demonstrando com cuidado como um ajuste preciso melhora a visão. Expressão de empatia genuína." },
-  { sub: "Confiança", title: "A Visão Clara", text: "A pessoa da foto de referência olhando para a câmera através de uma lente de demonstração, com expressão amigável e profissional. Comunica a alegria de proporcionar visão nítida aos clientes." },
-  { sub: "Confiança", title: "O Legado de Cuidado", text: "A pessoa da foto de referência em sua ótica, expressão serena e orgulhosa. Iluminação suave e nostálgica, transmitindo tradição aliada à inovação e cuidado constante com cada cliente." },
-  // Redes Sociais e Marketing
-  { sub: "Social", title: "O Reels de Boas-Vindas", text: "A pessoa da foto de referência na entrada da ótica, fazendo gesto de 'venha conhecer' com sorriso acolhedor. Fundo da loja iluminada e convidativa. Formato vertical 9:16 ideal para Reels/TikTok. Energia positiva e acessível." },
-  { sub: "Social", title: "O Antes e Depois", text: "A pessoa da foto de referência segurando dois óculos — um antigo e gasto na mão esquerda, um novo e elegante na mão direita. Expressão de satisfação mostrando a transformação. Layout ideal para post comparativo no Instagram." },
-  { sub: "Social", title: "A Dica do Dia", text: "A pessoa da foto de referência em close, apontando para a câmera com expressão de 'presta atenção'. Segura um óculos com a outra mão. Texto sobreposto 'Dica do Especialista' no estilo de card do Instagram. Fundo limpo da ótica." },
-  { sub: "Social", title: "O Unboxing Premium", text: "A pessoa da foto de referência abrindo uma caixa elegante de óculos, revelando uma armação nova. Expressão de entusiasmo genuíno. Iluminação cinematográfica com destaque no produto sendo revelado. Ideal para Story ou Reels." },
-  { sub: "Social", title: "O Especialista Responde", text: "A pessoa da foto de referência sentada em frente à câmera em estilo de entrevista/podcast, com a ótica ao fundo desfocada. Microfone de lapela discreto. Expressão atenta e profissional, como se estivesse respondendo perguntas dos seguidores. Iluminação de estúdio caseiro bem feita." },
-  // Autoridade e Educação
-  { sub: "Autoridade", title: "O Professor de Lentes", text: "A pessoa da foto de referência em frente a um quadro branco ou tela, explicando tipos de lentes com diagramas desenhados. Expressão didática e apaixonada. Jaleco branco, postura de palestrante. Iluminação de sala de aula moderna." },
-  { sub: "Autoridade", title: "O Parecer Técnico", text: "A pessoa da foto de referência analisando um laudo óptico com expressão concentrada, usando óculos de grau. Mesa com documentos técnicos e uma armação sob análise. Ambiente de escritório profissional e organizado." },
-  { sub: "Autoridade", title: "A Live Educativa", text: "A pessoa da foto de referência falando para a câmera em formato de live, segurando diferentes tipos de lentes para demonstração. Ring light refletindo nos óculos. Setup profissional de streaming com a ótica ao fundo." },
-  { sub: "Autoridade", title: "O Comparativo de Materiais", text: "A pessoa da foto de referência segurando duas armações de materiais diferentes (metal e acetato), explicando as vantagens de cada uma. Expressão de quem domina o assunto. Close nas mãos e nos materiais com fundo desfocado." },
-  { sub: "Autoridade", title: "O Mito vs Verdade", text: "A pessoa da foto de referência com expressão de 'agora vou te contar', apontando para dois painéis — um com ícone de X vermelho (mito) e outro com check verde (verdade). Óculos na mão como referência visual. Layout didático e moderno." },
-  // Bastidores e Dia a Dia
-  { sub: "Bastidores", title: "A Abertura da Loja", text: "A pessoa da foto de referência abrindo as portas da ótica pela manhã, luz dourada do nascer do sol entrando. Expressão de orgulho e determinação. Chaves na mão, loja impecável pronta para receber clientes." },
-  { sub: "Bastidores", title: "A Organização do Estoque", text: "A pessoa da foto de referência organizando armações novas que acabaram de chegar. Caixas abertas na bancada, armações sendo dispostas com cuidado. Expressão de empolgação com as novidades. Ambiente de backoffice da ótica." },
-  { sub: "Bastidores", title: "O Café da Manhã do Óptico", text: "A pessoa da foto de referência tomando café na ótica antes de abrir, lendo sobre tendências de eyewear em um tablet. Momento de preparação matinal. Luz suave da manhã, ambiente tranquilo e focado." },
-  { sub: "Bastidores", title: "A Montagem dos Óculos", text: "A pessoa da foto de referência montando lentes em uma armação com equipamento de precisão. Close nas mãos trabalhando com cuidado. Concentração total. Ambiente de laboratório óptico com ferramentas especializadas." },
-  { sub: "Bastidores", title: "O Fim de Expediente", text: "A pessoa da foto de referência fechando a ótica ao final do dia, olhando para trás com satisfação. Luzes da vitrine ainda acesas, rua ao fundo com iluminação noturna. Momento de reflexão e orgulho pelo dia de trabalho." },
-  // Lifestyle Profissional
-  { sub: "Lifestyle", title: "O Óptico Moderno", text: "A pessoa da foto de referência caminhando por uma rua urbana estilosa usando óculos de sol premium. Outfit profissional mas moderno. Fotografia de rua editorial com bokeh urbano. Confiança e estilo pessoal em destaque." },
-  { sub: "Lifestyle", title: "O Networking do Setor", text: "A pessoa da foto de referência em um evento do setor óptico, conversando com outros profissionais. Crachá de evento visível. Ambiente de convenção ou feira com stands ao fundo desfocados. Expressão engajada e conectada." },
-  { sub: "Lifestyle", title: "A Inspiração Criativa", text: "A pessoa da foto de referência em um café moderno, desenhando sketches de armações em um caderno. Óculos apoiados na mesa, café ao lado. Momento criativo e inspiracional. Iluminação natural de janela, tons quentes." },
-  { sub: "Lifestyle", title: "O Treinamento Contínuo", text: "A pessoa da foto de referência em uma sala de treinamento, fazendo anotações durante um curso de atualização profissional. Tela com conteúdo técnico de lentes ao fundo. Expressão de interesse genuíno e crescimento profissional." },
-  { sub: "Lifestyle", title: "O Retrato do Especialista", text: "A pessoa da foto de referência em retrato profissional de meio corpo, braços cruzados com confiança, usando óculos elegantes. Fundo de estúdio com gradiente suave. Iluminação profissional tipo Rembrandt. Ideal para LinkedIn, site da ótica ou cartão de visita." },
-];
+
 
 export default function FacePostPage() {
   const [facePhotos, setFacePhotos] = useState<string[]>([]);
@@ -282,7 +234,7 @@ export default function FacePostPage() {
               <div key={i} className="rounded-2xl card-base overflow-hidden">
                 <div className="bg-bg-card-hover">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.url} alt={`FacePost ${i + 1}`} className="w-full h-auto object-contain" />
+                  <img src={item.url} alt={`FacePost ${i + 1}`} loading="lazy" className="w-full h-auto object-contain" />
                 </div>
                 <div className="p-3 space-y-2">
                   {/* Save to gallery */}

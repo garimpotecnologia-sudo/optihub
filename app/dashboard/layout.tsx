@@ -152,8 +152,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Background effects */}
       <div className="fixed inset-0 bg-grid pointer-events-none z-0 opacity-60" />
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="animate-orb absolute top-1/4 left-1/3 w-[420px] h-[420px] rounded-full bg-accent-green/[0.02] blur-[100px]" />
-        <div className="animate-orb-delayed absolute bottom-1/4 right-1/4 w-[350px] h-[350px] rounded-full bg-accent-teal/[0.015] blur-[90px]" />
+        <div className="animate-orb absolute top-1/4 left-1/3 w-[420px] h-[420px] rounded-full bg-accent-green/[0.02] blur-[80px] will-change-transform" />
+        <div className="animate-orb-delayed absolute bottom-1/4 right-1/4 w-[350px] h-[350px] rounded-full bg-accent-teal/[0.015] blur-[80px] will-change-transform" />
       </div>
       <div className="fixed inset-0 pointer-events-none z-0" style={{ background: "radial-gradient(ellipse at center, transparent 30%, #0C1A14 80%)" }} />
 

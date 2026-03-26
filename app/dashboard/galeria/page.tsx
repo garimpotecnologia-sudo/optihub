@@ -155,7 +155,7 @@ export default function GaleriaPage() {
               {/* Image */}
               <div className="relative aspect-square bg-bg-card-hover">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.image_url} alt={item.prompt.slice(0, 50)} className="w-full h-full object-cover" />
+                <img src={item.image_url} alt={item.prompt.slice(0, 50)} loading="lazy" className="w-full h-full object-cover" />
 
                 {/* Hover overlay */}
                 <div className="absolute inset-0 bg-bg-deep/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-4">
