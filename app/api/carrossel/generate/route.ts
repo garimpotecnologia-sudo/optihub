@@ -50,7 +50,8 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
-    const { template, customTema, colors } = await request.json();
+    const { template, customTema, colors, slideCount = 9 } = await request.json();
+    const numSlides = Math.min(Math.max(Number(slideCount) || 9, 3), 12);
 
     const tmpl = TEMPLATES[template];
     if (!tmpl) return NextResponse.json({ error: "Template inválido" }, { status: 400 });
@@ -69,17 +70,17 @@ Responda EXCLUSIVAMENTE em JSON válido, sem markdown, sem comentários. O forma
 [
   {"order":1,"headline":"TÍTULO SLIDE 1","body":"Texto de apoio do slide 1 (2-3 linhas)","imagePrompt":"Prompt detalhado em português para gerar a imagem de fundo deste slide. Tema: ótica/óculos. Estilo: fotografia editorial premium para Instagram. Formato: quadrado 1:1."},
   {"order":2,...},
-  ...até order 9
+  ...até order ${numSlides}
 ]
 
 Cada imagePrompt deve ser um prompt completo e detalhado para geração de imagem por IA, incluindo: conceito visual, estilo, composição, cores, textura. Focado em ótica/eyewear. SEM texto na imagem.`;
 
-    // Generate slide content via Gemini text API
-    const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_KEY;
-    if (!geminiKey) return NextResponse.json({ error: "API key não configurada" }, { status: 500 });
+    // Generate slide content via Gemini text API (uses same key as image generation)
+    const apiKey = process.env.NANO_BANANA_API_KEY;
+    if (!apiKey) return NextResponse.json({ error: "API key não configurada" }, { status: 500 });
 
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
