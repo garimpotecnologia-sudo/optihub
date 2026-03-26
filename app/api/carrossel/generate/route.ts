@@ -75,24 +75,26 @@ Responda EXCLUSIVAMENTE em JSON válido, sem markdown, sem comentários. O forma
 
 Cada imagePrompt deve ser um prompt completo e detalhado para geração de imagem por IA, incluindo: conceito visual, estilo, composição, cores, textura. Focado em ótica/eyewear. SEM texto na imagem.`;
 
-    // Generate slide content via Gemini text API (uses same key as image generation)
-    const apiKey = process.env.NANO_BANANA_API_KEY;
-    if (!apiKey) return NextResponse.json({ error: "API key não configurada" }, { status: 500 });
+    // Generate slide content via OpenRouter
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
+    if (!openRouterKey) return NextResponse.json({ error: "API key não configurada" }, { status: 500 });
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.8, maxOutputTokens: 4096 },
-        }),
-      }
-    );
+    const llmRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${openRouterKey}`,
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.0-flash-001",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.8,
+        max_tokens: 4096,
+      }),
+    });
 
-    const geminiData = await geminiRes.json();
-    const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const llmData = await llmRes.json();
+    const rawText = llmData?.choices?.[0]?.message?.content || "";
 
     // Extract JSON from response
     let slides;
