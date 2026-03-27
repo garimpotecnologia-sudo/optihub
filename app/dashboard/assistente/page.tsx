@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Bookmark, Trash2, ChevronDown, ChevronUp, Send, Bot, User } from "lucide-react";
+import { Bookmark, Trash2, ChevronDown, ChevronUp, Send, Bot, User, RotateCcw } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -14,14 +14,17 @@ interface SavedResponse {
   created_at: string;
 }
 
+const WELCOME_MESSAGE: Message = {
+  role: "assistant",
+  content:
+    "Olá! Sou o assistente técnico da sua ótica. Posso te ajudar com informações sobre lentes, armações, patologias oculares, cirurgias refrativas, dicas de venda e muito mais. Como posso ajudar?",
+};
+
+const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+const LS_KEY = "assistente_last_msg";
+
 export default function AssistentePage() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content:
-        "Olá! Sou o assistente técnico da sua ótica. Posso te ajudar com informações sobre lentes, armações, patologias oculares, cirurgias refrativas, dicas de venda e muito mais. Como posso ajudar?",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState<SavedResponse[]>([]);
@@ -32,9 +35,25 @@ export default function AssistentePage() {
   const [showSaved, setShowSaved] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Auto-reset after 24h of inactivity
+  useEffect(() => {
+    try {
+      const last = localStorage.getItem(LS_KEY);
+      if (last && Date.now() - Number(last) > TWENTY_FOUR_HOURS) {
+        setMessages([WELCOME_MESSAGE]);
+        localStorage.removeItem(LS_KEY);
+      }
+    } catch { /* localStorage unavailable */ }
+  }, []);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const handleNewContext = () => {
+    setMessages([WELCOME_MESSAGE]);
+    try { localStorage.removeItem(LS_KEY); } catch { /* */ }
+  };
 
   // Load saved responses on mount
   const loadSaved = useCallback(async () => {
@@ -59,6 +78,7 @@ export default function AssistentePage() {
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setLoading(true);
+    try { localStorage.setItem(LS_KEY, String(Date.now())); } catch { /* */ }
 
     try {
       const res = await fetch("/api/chat", {
@@ -139,12 +159,21 @@ export default function AssistentePage() {
           <h1 className="text-2xl font-bold font-[var(--font-heading)]">Assistente IA</h1>
           <p className="text-text-secondary text-sm mt-1">Especialista técnico em ótica — lentes, armações, patologias e mais.</p>
         </div>
-        <button
-          onClick={() => setShowSaved(!showSaved)}
-          className="lg:hidden px-3 py-1.5 rounded-lg bg-accent-amber/10 border border-accent-amber/20 text-accent-amber text-[11px] font-bold flex items-center gap-1.5"
-        >
-          <Bookmark className="w-3.5 h-3.5" /> {savedCount}/{savedMax}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleNewContext}
+            disabled={messages.length <= 1}
+            className="px-3 py-1.5 rounded-lg border border-border text-text-muted text-[11px] font-bold hover:text-accent-green hover:border-accent-green/30 transition-all flex items-center gap-1.5 disabled:opacity-30"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Novo Contexto
+          </button>
+          <button
+            onClick={() => setShowSaved(!showSaved)}
+            className="lg:hidden px-3 py-1.5 rounded-lg bg-accent-amber/10 border border-accent-amber/20 text-accent-amber text-[11px] font-bold flex items-center gap-1.5"
+          >
+            <Bookmark className="w-3.5 h-3.5" /> {savedCount}/{savedMax}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 min-h-0">
