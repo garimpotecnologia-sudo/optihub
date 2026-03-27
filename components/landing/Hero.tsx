@@ -61,7 +61,7 @@ export default function Hero() {
         >
           <div className="w-2 h-2 rounded-full bg-accent-green animate-pulse" />
           <span className="text-xs font-medium tracking-wide text-accent-green/90">
-            Powered by Nano Banana AI
+            Powered by AgentPRO
           </span>
         </div>
 

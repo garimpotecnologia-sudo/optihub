@@ -60,7 +60,7 @@ export default function Footer() {
           <div className="flex items-center gap-2">
             <span className="text-xs text-text-muted">Powered by</span>
             <span className="text-xs font-bold text-accent-green tracking-wide">
-              Nano Banana AI
+              AgentPRO
             </span>
           </div>
         </div>
