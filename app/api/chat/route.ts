@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { SYSTEM_PROMPT } from "./system-prompt";
 
-const API_URL =
-  process.env.NANO_BANANA_API_URL ||
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
-const API_KEY = process.env.NANO_BANANA_API_KEY || "";
+const CLIPROXY_URL = "https://ia.otimusclinic.com.br/v1/chat/completions";
+const CLIPROXY_KEY = "sk-oc-5fd55097277e4c3e4b3a1ce5ef7fbd077020f8d4d75b3c33";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +14,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    // Get profile for context
     const { data: profile } = await supabase
       .from("profiles")
       .select("optica_name, optica_brands")
@@ -25,46 +23,42 @@ export async function POST(request: NextRequest) {
     const { messages } = await request.json();
 
     const brandsInfo = profile?.optica_brands?.length
-      ? `A ótica trabalha com as marcas: ${profile.optica_brands.join(", ")}.`
+      ? `\nA ótica trabalha com as marcas: ${profile.optica_brands.join(", ")}.`
       : "";
-
     const opticaInfo = profile?.optica_name
-      ? `O nome da ótica é: ${profile.optica_name}.`
+      ? `\nO nome da ótica é: ${profile.optica_name}.`
       : "";
 
-    const systemPrompt = `Você é um assistente de vendas especializado em óticas. ${opticaInfo} ${brandsInfo}
+    const fullSystemPrompt = `${SYSTEM_PROMPT}${opticaInfo}${brandsInfo}`;
 
-Você conhece profundamente sobre:
-- Tipos de lentes (monofocal, bifocal, multifocal/progressiva, transitions, antirreflexo)
-- Marcas de armações (Ray-Ban, Oakley, Prada, Gucci, Mormaii, Ana Hickmann, etc)
-- Materiais (acetato, metal, titânio, TR90)
-- Tipos de rosto e armações ideais
-- Proteção UV e lentes de sol
-- Técnicas de vendas para óticas
-
-Responda sempre de forma simpática, profissional e em português brasileiro.`;
-
-    const contents = [
-      { role: "user", parts: [{ text: systemPrompt }] },
-      ...messages.map((msg: { role: string; content: string }) => ({
-        role: msg.role === "assistant" ? "model" : "user",
-        parts: [{ text: msg.content }],
-      })),
-    ];
-
-    const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+    const res = await fetch(CLIPROXY_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${CLIPROXY_KEY}`,
+      },
       body: JSON.stringify({
-        contents,
-        generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+        model: "claude-sonnet-4-20250514",
+        messages: [
+          { role: "system", content: fullSystemPrompt },
+          ...messages.map((msg: { role: string; content: string }) => ({
+            role: msg.role,
+            content: msg.content,
+          })),
+        ],
+        temperature: 0.7,
+        max_tokens: 2048,
       }),
     });
 
-    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("CLIProxy error:", res.status, errText);
+      throw new Error(`CLIProxy error: ${res.status}`);
+    }
 
-    const data = await response.json();
-    const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const data = await res.json();
+    const textContent = data?.choices?.[0]?.message?.content || "";
 
     // Save messages to DB
     const lastUserMsg = messages[messages.length - 1];
